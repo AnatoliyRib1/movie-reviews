@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/AnatoliyRib1/movie-reviews/internal/config"
+	"github.com/AnatoliyRib1/movie-reviews/internal/jwt"
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/auth"
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"log"
@@ -25,13 +28,18 @@ func main() {
 	db, err := getDB(context.Background(), cfg.DbUrl)
 	failOnError(err, "connect to db")
 
-	err = db.Ping(context.Background())
-	failOnError(err, "ping db")
+	jwtService := jwt.NewService(cfg.Jwt.Secret, cfg.Jwt.AccessExpiration)
+	usersModule := users.NewModule(db)
+	authModule := auth.NewModule(usersModule.Service, jwtService)
 
-	signalChanel := make(chan os.Signal, 1)
-	signal.Notify(signalChanel, os.Interrupt)
+	e.POST("/api/auth/register", authModule.Handler.Register)
+	e.POST("/api/users/login", authModule.Handler.Login)
+
+	e.GET("/api/users", usersModule.Handler.GetUsers)
 
 	go func() {
+		signalChanel := make(chan os.Signal, 1)
+		signal.Notify(signalChanel, os.Interrupt)
 		<-signalChanel
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -40,7 +48,7 @@ func main() {
 		}
 	}()
 
-	err = e.Start(fmt.Sprintf(":%d", &cfg.Port))
+	err = e.Start(fmt.Sprintf(":%d", cfg.Port))
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}

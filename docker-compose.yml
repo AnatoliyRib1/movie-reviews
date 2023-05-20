@@ -10,15 +10,33 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - 5433:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  migrator:
+    build: tern
+    command:
+      - migrate
+      - --conn-string
+      - postgres://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
+      - --migrations
+      - /migrations
+    depends_on:
+      - db
+
 
   server:
     build: .
     restart: always
     ports:
-      - 8000:8000
+      - 8081:8081
     environment:
       DB_URL: postgres://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
-      PORT: 8000
+      PORT: 8081
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
     depends_on:
-      - db
+      - migrator
 
+volumes:
+  db_data:

@@ -69,7 +69,7 @@ func (r *Repository) Delete(ctx context.Context, userId int) error {
 	return nil
 }
 
-func (r *Repository) Put(ctx context.Context, userId int, bio string) error {
+func (r *Repository) Update(ctx context.Context, userId int, bio string) error {
 	n, err := r.db.Exec(ctx, "UPDATE users SET bio = $2 WHERE id = $1 AND deleted_at IS NULL", userId, bio)
 	if err != nil {
 		return err
@@ -78,5 +78,4 @@ func (r *Repository) Put(ctx context.Context, userId int, bio string) error {
 		return errors.New("user not found")
 	}
 	return nil
-
 }

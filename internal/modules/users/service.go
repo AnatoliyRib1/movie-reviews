@@ -25,6 +25,6 @@ func (s *Service) Delete(ctx context.Context, userId int) error {
 	return s.repo.Delete(ctx, userId)
 }
 
-func (s *Service) Put(ctx context.Context, userId int, bio string) error {
-	return s.repo.Put(ctx, userId, bio)
+func (s *Service) Update(ctx context.Context, userId int, bio string) error {
+	return s.repo.Update(ctx, userId, bio)
 }

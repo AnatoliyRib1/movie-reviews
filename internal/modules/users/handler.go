@@ -14,10 +14,6 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h Handler) GetUsers(c echo.Context) error {
-	return c.String(200, "not implemented")
-}
-
 func (h Handler) Delete(c echo.Context) error {
 	var req DeleteRequest
 	if err := c.Bind(&req); err != nil {
@@ -26,19 +22,18 @@ func (h Handler) Delete(c echo.Context) error {
 	return h.service.Delete(c.Request().Context(), req.UserId)
 }
 
-func (h Handler) Put(c echo.Context) error {
+func (h Handler) Update(c echo.Context) error {
 	var req PutRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	return h.service.Put(c.Request().Context(), req.UserId, req.Bio)
-
+	return h.service.Update(c.Request().Context(), req.UserId, req.Bio)
 }
 
 type DeleteRequest struct {
-	UserId int `param:"UserId"`
+	UserId int `param:"userId"`
 }
 type PutRequest struct {
-	UserId int    `param:"UserId"`
-	Bio    string `param:"Bio"`
+	UserId int    `param:"userId" validate:"nonzero"`
+	Bio    string `json:"bio"`
 }

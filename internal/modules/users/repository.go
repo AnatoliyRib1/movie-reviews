@@ -44,7 +44,7 @@ func (r *Repository) GetExistingUserWithPasswordByEmail(ctx context.Context, ema
 
 func (r *Repository) GetExistingUserById(ctx context.Context, userId int) (*User, error) {
 	var user User
-	query := "SELECT id, username, email,  role, bio FROM users WHERE email = $1 AND deleted_at IS NULL "
+	query := "SELECT id, username, email,  role, bio FROM users WHERE id = $1 AND deleted_at IS NULL "
 	row := r.db.QueryRow(ctx, query, userId)
 
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.Bio)

@@ -15,7 +15,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h Handler) Delete(c echo.Context) error {
-	var req DeleteRequest
+	var req DeleteOrGetRequest
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -30,7 +30,19 @@ func (h Handler) Update(c echo.Context) error {
 	return h.service.Update(c.Request().Context(), req.UserId, req.Bio)
 }
 
-type DeleteRequest struct {
+func (h Handler) Get(c echo.Context) error {
+	var req DeleteOrGetRequest
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	user, err := h.service.Get(c.Request().Context(), req.UserId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	return c.JSON(http.StatusOK, user)
+}
+
+type DeleteOrGetRequest struct {
 	UserId int `param:"userId"`
 }
 type PutRequest struct {

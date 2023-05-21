@@ -45,6 +45,7 @@ func main() {
 
 	api.DELETE("/users/:userId", usersModule.Handler.Delete, authMiddleware, auth.Self)
 	api.PUT("/users/:userId", usersModule.Handler.Update, authMiddleware, auth.Self)
+	api.GET("/users/:userId", usersModule.Handler.Get)
 
 	go func() {
 		signalChanel := make(chan os.Signal, 1)

@@ -28,3 +28,8 @@ func (s *Service) Delete(ctx context.Context, userId int) error {
 func (s *Service) Update(ctx context.Context, userId int, bio string) error {
 	return s.repo.Update(ctx, userId, bio)
 }
+
+func (s *Service) Get(ctx context.Context, userId int) (user *User, err error) {
+	user, err = s.repo.GetExistingUserById(ctx, userId)
+	return user, err
+}

@@ -18,5 +18,4 @@ func NewModule(db *pgxpool.Pool) *Module {
 		Service:    service,
 		Repository: repo,
 	}
-
 }

@@ -11,7 +11,6 @@ type Module struct {
 }
 
 func NewModule(userService *users.Service, jwtService *jwt.Service) *Module {
-
 	service := NewService(userService, jwtService)
 	handler := NewHandler(service)
 
@@ -19,5 +18,4 @@ func NewModule(userService *users.Service, jwtService *jwt.Service) *Module {
 		Handler: handler,
 		Service: service,
 	}
-
 }

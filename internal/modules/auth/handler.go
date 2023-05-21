@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"net/http"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
 	"github.com/labstack/echo/v4"
-	"net/http"
+	"gopkg.in/validator.v2"
 )
 
 type Handler struct {
@@ -14,6 +16,9 @@ func (h *Handler) Register(c echo.Context) error {
 	var req RegisterRequest
 	if err := c.Bind(&req); err != nil {
 		return err
+	}
+	if err := validator.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	user := &users.User{
@@ -29,17 +34,21 @@ func (h *Handler) Register(c echo.Context) error {
 }
 
 func (h *Handler) Login(c echo.Context) error {
-	var logReq LoginRequest
+	var req LoginRequest
 
-	if err := c.Bind(&logReq); err != nil {
+	if err := c.Bind(&req); err != nil {
 		return err
 	}
 
-	token, err := h.authService.Login(c.Request().Context(), logReq.Email, logReq.Password)
+	if err := validator.Validate(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
+	token, err := h.authService.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
 		return echo.NewHTTPError(echo.ErrInternalServerError.Code, err.Error())
 	}
-	return c.JSON(http.StatusOK, token)
+	return c.JSON(http.StatusOK, LoginResponse{AccessToken: token})
 }
 
 func NewHandler(authService *Service) *Handler {
@@ -47,11 +56,15 @@ func NewHandler(authService *Service) *Handler {
 }
 
 type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"min=5,max=16"`
+	Email    string `json:"email" validate:"email"`
+	Password string `json:"password" validate:"password"`
 }
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"email"`
+	Password string `json:"password" validate:"password"`
+}
+
+type LoginResponse struct {
+	AccessToken string `json:"access_token"`
 }

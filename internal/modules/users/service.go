@@ -17,8 +17,8 @@ func (s *Service) Create(ctx context.Context, user *UserWithPassword) error {
 }
 
 func (s *Service) GetUser(ctx context.Context, email string) (user *UserWithPassword, err error) {
-	user, err = s.repo.GetExistingUserWithPasswordByEmail(ctx, email)
-	return user, err
+	return s.repo.GetExistingUserWithPasswordByEmail(ctx, email)
+
 }
 
 func (s *Service) Delete(ctx context.Context, userId int) error {
@@ -30,6 +30,6 @@ func (s *Service) Update(ctx context.Context, userId int, bio string) error {
 }
 
 func (s *Service) Get(ctx context.Context, userId int) (user *User, err error) {
-	user, err = s.repo.GetExistingUserById(ctx, userId)
-	return user, err
+	return s.repo.GetExistingUserById(ctx, userId)
+
 }

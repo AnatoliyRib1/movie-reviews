@@ -1,6 +1,7 @@
 package users
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -33,7 +34,7 @@ func (h Handler) Update(c echo.Context) error {
 func (h Handler) Get(c echo.Context) error {
 	var req DeleteOrGetRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return fmt.Errorf("user not found")
 	}
 	user, err := h.service.Get(c.Request().Context(), req.UserId)
 	if err != nil {

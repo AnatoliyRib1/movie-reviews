@@ -3,25 +3,28 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/AnatoliyRib1/movie-reviews/internal/config"
-	"github.com/AnatoliyRib1/movie-reviews/internal/jwt"
-	"github.com/AnatoliyRib1/movie-reviews/internal/modules/auth"
-	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/AnatoliyRib1/movie-reviews/internal/config"
+	"github.com/AnatoliyRib1/movie-reviews/internal/jwt"
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/auth"
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
+	"github.com/AnatoliyRib1/movie-reviews/internal/validation"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo/v4"
 )
 
 const dbConnectTimeout = 10 * time.Second
 
 func main() {
-	e := echo.New()
 	cfg, err := config.NewConfig()
 	failOnError(err, "parse config")
+
+	validation.SetupValidators()
 
 	fmt.Printf("started with config: %w", cfg)
 
@@ -32,10 +35,17 @@ func main() {
 	usersModule := users.NewModule(db)
 	authModule := auth.NewModule(usersModule.Service, jwtService)
 
-	e.POST("/api/auth/register", authModule.Handler.Register)
-	e.POST("/api/users/login", authModule.Handler.Login)
+	e := echo.New()
+	api := e.Group("/api")
 
-	e.GET("/api/users", usersModule.Handler.GetUsers)
+	authMiddleware := jwt.NewAuthMiddleware(cfg.Jwt.Secret)
+
+	api.POST("/auth/register", authModule.Handler.Register)
+	api.POST("/users/login", authModule.Handler.Login)
+
+	api.DELETE("/users/:userId", usersModule.Handler.Delete, authMiddleware, auth.Self)
+	api.PUT("/users/:userId", usersModule.Handler.Update, authMiddleware, auth.Self)
+	api.GET("/users/:userId", usersModule.Handler.Get)
 
 	go func() {
 		signalChanel := make(chan os.Signal, 1)
@@ -52,8 +62,8 @@ func main() {
 	if err != nil && err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
-
 }
+
 func getDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 	ctx, _ = context.WithTimeout(ctx, dbConnectTimeout)
 

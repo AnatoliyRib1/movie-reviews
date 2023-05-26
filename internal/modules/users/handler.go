@@ -1,8 +1,10 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
+	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 
 	"github.com/labstack/echo/v4"
 )
@@ -16,37 +18,52 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h Handler) Delete(c echo.Context) error {
-	var req DeleteOrGetRequest
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	req, err := echox.BindAndValidate[DeleteOrGetRequest](c)
+	if err != nil {
+		return err
 	}
 	return h.service.Delete(c.Request().Context(), req.UserId)
 }
 
 func (h Handler) Update(c echo.Context) error {
-	var req PutRequest
-	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	req, err := echox.BindAndValidate[UpdateUserRequest](c)
+	if err != nil {
+		return err
 	}
-	return h.service.Update(c.Request().Context(), req.UserId, req.Bio)
+
+	return h.service.UpdateBio(c.Request().Context(), req.UserId, *req.Bio)
 }
 
 func (h Handler) Get(c echo.Context) error {
-	var req DeleteOrGetRequest
-	if err := c.Bind(&req); err != nil {
-		return fmt.Errorf("user not found")
+	req, err := echox.BindAndValidate[DeleteOrGetRequest](c)
+	if err != nil {
+		return err
 	}
 	user, err := h.service.Get(c.Request().Context(), req.UserId)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return apperrors.BadRequest(err)
 	}
 	return c.JSON(http.StatusOK, user)
 }
 
-type DeleteOrGetRequest struct {
-	UserId int `param:"userId"`
+func (h Handler) SetRole(c echo.Context) error {
+	req, err := echox.BindAndValidate[SetUserRoleRequest](c)
+	if err != nil {
+		return err
+	}
+
+	return h.service.SetRole(c.Request().Context(), req.UserId, req.Role)
 }
-type PutRequest struct {
+
+type DeleteOrGetRequest struct {
+	UserId int `param:"userId" validate:"nonzero"`
+}
+type UpdateUserRequest struct {
+	UserId int     `param:"userId" validate:"nonzero"`
+	Bio    *string `json:"bio"`
+}
+
+type SetUserRoleRequest struct {
 	UserId int    `param:"userId" validate:"nonzero"`
-	Bio    string `json:"bio"`
+	Role   string `param:"role" validate:"role"`
 }

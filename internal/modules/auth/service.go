@@ -2,8 +2,8 @@ package auth
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/jwt"
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
 	"golang.org/x/crypto/bcrypt"
@@ -24,7 +24,7 @@ func NewService(userService *users.Service, jwtService *jwt.Service) *Service {
 func (s *Service) Register(ctx context.Context, user *users.User, password string) error {
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return apperrors.Internal(err)
 	}
 
 	userWithPassword := &users.UserWithPassword{
@@ -39,11 +39,12 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 	if user == nil {
 		return "", err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
-	if err != nil {
-		return "", fmt.Errorf("incorrect password")
+	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			return "", apperrors.Unauthorized("invalid password")
+		}
+		return "", apperrors.Internal(err)
 	}
-
 	accessToken, err := s.jwtService.GenerateToken(int(user.ID), user.Role)
 	return accessToken, nil
 }

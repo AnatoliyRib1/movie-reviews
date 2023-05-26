@@ -5,6 +5,8 @@ import (
 	"net/mail"
 	"strings"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
+
 	"gopkg.in/validator.v2"
 )
 
@@ -15,6 +17,7 @@ func SetupValidators() {
 	}{
 		{"password", password},
 		{"email", email},
+		{"role", role},
 	}
 
 	for _, v := range validators {
@@ -66,4 +69,17 @@ func email(v interface{}, param string) error {
 	}
 	_, err := mail.ParseAddress(s)
 	return err
+}
+
+func role(v interface{}, param string) error {
+	s, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("email only validates string")
+	}
+
+	if !(s == users.AdminRole || s == users.EditorRole || s == users.UserRole) {
+		return fmt.Errorf("you can't create new roles: %d ", s)
+	}
+
+	return nil
 }

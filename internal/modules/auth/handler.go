@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 
-	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
@@ -41,7 +40,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	token, err := h.authService.Login(c.Request().Context(), req.Email, req.Password)
 	if err != nil {
-		return apperrors.BadRequestHidden(err, "user login error")
+		return err
 	}
 	return c.JSON(http.StatusOK, LoginResponse{AccessToken: token})
 }

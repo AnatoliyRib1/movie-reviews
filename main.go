@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	mylog "github.com/AnatoliyRib1/movie-reviews/internal/log"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 	"golang.org/x/exp/slog"
 	"net/http"
 	"os"
@@ -34,7 +34,7 @@ func main() {
 	failOnError(err, "parse config")
 	validation.SetupValidators()
 
-	logger, err := mylog.SetupLogger(cfg.Local, cfg.LogLevel)
+	logger, err := log.SetupLogger(cfg.Local, cfg.LogLevel)
 	failOnError(err, "setup logger")
 	slog.SetDefault(logger)
 

@@ -2,7 +2,7 @@ package users
 
 import (
 	"context"
-	mylog "github.com/AnatoliyRib1/movie-reviews/internal/log"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 )
 
 type Service struct {
@@ -25,7 +25,7 @@ func (s *Service) Delete(ctx context.Context, userId int) error {
 	if err := s.repo.Delete(ctx, userId); err != nil {
 		return err
 	}
-	mylog.FromContext(ctx).Info("user deleted", "userId", userId)
+	log.FromContext(ctx).Info("user deleted", "userId", userId)
 	return nil
 }
 
@@ -33,7 +33,7 @@ func (s *Service) UpdateBio(ctx context.Context, userId int, bio string) error {
 	if err := s.repo.UpdateBio(ctx, userId, bio); err != nil {
 		return err
 	}
-	mylog.FromContext(ctx).Info("user updated", "userId", userId)
+	log.FromContext(ctx).Info("user updated", "userId", userId)
 	return nil
 }
 
@@ -45,6 +45,6 @@ func (s *Service) SetRole(ctx context.Context, userId int, role string) error {
 	if err := s.repo.SetRole(ctx, userId, role); err != nil {
 		return err
 	}
-	mylog.FromContext(ctx).Info("user role updated", "userId", userId, "role", role)
+	log.FromContext(ctx).Info("user role updated", "userId", userId, "role", role)
 	return nil
 }

@@ -37,14 +37,6 @@ func SetupLogger(islocal bool, level string) (*slog.Logger, error) {
 	return slog.New(handler), nil
 }
 
-type Leveler struct {
-	level slog.Level
-}
-
-func (l Leveler) Level() slog.Level {
-	return l.level
-}
-
 func newLevelFromString(level string) (slog.Level, error) {
 	switch level {
 	case "debug":

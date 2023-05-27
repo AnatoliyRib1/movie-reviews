@@ -2,7 +2,7 @@ package echox
 
 import (
 	"github.com/AnatoliyRib1/movie-reviews/internal/jwt"
-	mylog "github.com/AnatoliyRib1/movie-reviews/internal/log"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/exp/slog"
 )
@@ -23,7 +23,7 @@ func Logger(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		logger := slog.Default().With(attrs...)
-		ctx := mylog.WithLogger(c.Request().Context(), logger)
+		ctx := log.WithLogger(c.Request().Context(), logger)
 		c.SetRequest(c.Request().WithContext(ctx))
 		return next(c)
 

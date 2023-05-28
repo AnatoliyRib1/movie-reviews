@@ -1,6 +1,7 @@
 package users
 
 import (
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"net/http"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -18,7 +19,7 @@ func NewHandler(service *Service) *Handler {
 }
 
 func (h Handler) Delete(c echo.Context) error {
-	req, err := echox.BindAndValidate[DeleteOrGetRequest](c)
+	req, err := echox.BindAndValidate[contracts.DeleteUserRequest](c)
 	if err != nil {
 		return err
 	}
@@ -26,16 +27,16 @@ func (h Handler) Delete(c echo.Context) error {
 }
 
 func (h Handler) Update(c echo.Context) error {
-	req, err := echox.BindAndValidate[UpdateUserRequest](c)
+	req, err := echox.BindAndValidate[contracts.UpdateUserRequest](c)
 	if err != nil {
 		return err
 	}
 
-	return h.service.UpdateBio(c.Request().Context(), req.UserId, *req.Bio)
+	return h.service.Update(c.Request().Context(), req.UserId, *req.Bio)
 }
 
 func (h Handler) Get(c echo.Context) error {
-	req, err := echox.BindAndValidate[DeleteOrGetRequest](c)
+	req, err := echox.BindAndValidate[contracts.GetUserRequest](c)
 	if err != nil {
 		return err
 	}
@@ -46,8 +47,21 @@ func (h Handler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
+func (h Handler) GetByUserName(c echo.Context) error {
+	req, err := echox.BindAndValidate[contracts.GetUserByUserNameRequest](c)
+	if err != nil {
+		return err
+	}
+	user, err := h.service.GetExistingUserByUserName(c.Request().Context(), req.UserName)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, user)
+
+}
+
 func (h Handler) SetRole(c echo.Context) error {
-	req, err := echox.BindAndValidate[SetUserRoleRequest](c)
+	req, err := echox.BindAndValidate[contracts.SetUserRoleRequest](c)
 	if err != nil {
 		return err
 	}

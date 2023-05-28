@@ -15,7 +15,7 @@ func Self(next echo.HandlerFunc) echo.HandlerFunc {
 
 		claims := jwt.GetClaims(c)
 		if claims == nil {
-			return errForbidden
+			return apperrors.Unauthorized("invalid or missing token")
 		}
 		if claims.Role == users.AdminRole || claims.Subject == userId {
 			return next(c)

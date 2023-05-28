@@ -29,8 +29,8 @@ func (s *Service) Delete(ctx context.Context, userId int) error {
 	return nil
 }
 
-func (s *Service) UpdateBio(ctx context.Context, userId int, bio string) error {
-	if err := s.repo.UpdateBio(ctx, userId, bio); err != nil {
+func (s *Service) Update(ctx context.Context, userId int, bio string) error {
+	if err := s.repo.Update(ctx, userId, bio); err != nil {
 		return err
 	}
 	log.FromContext(ctx).Info("user updated", "userId", userId)
@@ -47,4 +47,9 @@ func (s *Service) SetRole(ctx context.Context, userId int, role string) error {
 	}
 	log.FromContext(ctx).Info("user role updated", "userId", userId, "role", role)
 	return nil
+}
+
+func (s *Service) GetExistingUserByUserName(ctx context.Context, userName string) (user *User, err error) {
+	return s.repo.GetExistingUserByUserName(ctx, userName)
+
 }

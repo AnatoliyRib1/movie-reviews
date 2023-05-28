@@ -10,7 +10,7 @@ type Module struct {
 	Service *Service
 }
 
-func NewModule(userService *users.Service, jwtService *jwt.Service) *Module {
+func NewModule(jwtService *jwt.Service, userService *users.Service) *Module {
 	service := NewService(userService, jwtService)
 	handler := NewHandler(service)
 

@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
+	"golang.org/x/exp/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -33,6 +34,12 @@ func main() {
 	failOnError(err, "parse config")
 	validation.SetupValidators()
 
+	logger, err := log.SetupLogger(cfg.Local, cfg.LogLevel)
+	failOnError(err, "setup logger")
+	slog.SetDefault(logger)
+
+	slog.Info("started", "config", cfg)
+
 	db, err := getDB(context.Background(), cfg.DbUrl)
 	failOnError(err, "connect to db")
 
@@ -50,6 +57,8 @@ func main() {
 	api := e.Group("/api")
 
 	api.Use(jwt.NewAuthMiddleware(cfg.Jwt.Secret))
+	api.Use(echox.Logger)
+
 	api.POST("/auth/register", authModule.Handler.Register)
 	api.POST("/users/login", authModule.Handler.Login)
 
@@ -65,14 +74,16 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := e.Shutdown(ctx); err != nil {
-			log.Printf("shutdown: %w", err)
+			slog.Error("server shutdown", "error", err)
 		}
 	}()
 
+	slog.Info("server started", "port", cfg.Port)
 	err = e.Start(fmt.Sprintf(":%d", cfg.Port))
 	if err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		slog.Error("server stopped", "error", err)
 	}
+	slog.Info("server stopped")
 }
 
 func createAdmin(cfg config.AdminConfig, authService *auth.Service) error {
@@ -97,6 +108,7 @@ func createAdmin(cfg config.AdminConfig, authService *auth.Service) error {
 	case err != nil:
 		return nil
 	default:
+		slog.Info("admin user created", "username", cfg.Username, "email", cfg.Email)
 		return nil
 
 	}
@@ -115,6 +127,7 @@ func getDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 
 func failOnError(err error, msg string) {
 	if err != nil {
-		log.Fatalf("%s : %s", msg, err)
+		slog.Error(msg, "error", err)
+		os.Exit(1)
 	}
 }

@@ -2,7 +2,7 @@ package echox
 
 import (
 	"errors"
-	"log"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 	"net/http"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -26,12 +26,13 @@ func ErrorHandler(err error, c echo.Context) {
 		Message:    appError.SafeError(),
 		IncidentId: appError.IncidentId,
 	}
+	logger := log.FromContext(c.Request().Context())
 
 	if appError.Code == apperrors.InternalCode {
-		log.Printf("[ERROR] %s %s : %s\nincidentId: %s\nstack trace: %s",
-			c.Request().Method, c.Request().RequestURI, err.Error(), appError.IncidentId, appError.StackTrace)
+		logger.Error("server error", "message", err.Error(), "incidentId", appError.IncidentId, "stacktrace", appError.StackTrace)
+
 	} else {
-		log.Printf("[WARN] %s %s : %s", c.Request().Method, c.Request().RequestURI, err.Error())
+		logger.Error("client error", "message", err.Error())
 	}
 	if err = c.JSON(toHttpStatus(appError.Code), httpError); err != nil {
 		c.Logger().Error(err)

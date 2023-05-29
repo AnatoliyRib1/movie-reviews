@@ -195,6 +195,22 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		require.NoError(t, err)
 	})
 
+	t.Run("users.setRole: unknown role", func(t *testing.T) {
+		req := &contracts.LoginUserRequest{
+			Email:    cfg.Admin.Email,
+			Password: cfg.Admin.Password,
+		}
+		res, err := c.LoginUser(req)
+		adminToken := res.AccessToken
+
+		req2 := &contracts.SetUserRoleRequest{
+			UserId: johnDoe.ID,
+			Role:   "editors",
+		}
+		err = c.SetRole(contracts.NewAuthenticated(req2, adminToken))
+		requireBadRequestError(t, err, "")
+	})
+
 	t.Run("users.DeleteUser: another user", func(t *testing.T) {
 
 		req := &contracts.DeleteUserRequest{

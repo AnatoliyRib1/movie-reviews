@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 )
 
@@ -51,5 +52,4 @@ func (s *Service) SetRole(ctx context.Context, userId int, role string) error {
 
 func (s *Service) GetExistingUserByUserName(ctx context.Context, userName string) (user *User, err error) {
 	return s.repo.GetExistingUserByUserName(ctx, userName)
-
 }

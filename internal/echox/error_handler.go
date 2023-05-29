@@ -2,9 +2,10 @@ package echox
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"github.com/AnatoliyRib1/movie-reviews/internal/log"
-	"net/http"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/labstack/echo/v4"
@@ -26,7 +27,6 @@ func ErrorHandler(err error, c echo.Context) {
 
 	if appError.Code == apperrors.InternalCode {
 		logger.Error("server error", "message", err.Error(), "incidentId", appError.IncidentId, "stacktrace", appError.StackTrace)
-
 	} else {
 		logger.Error("client error", "message", err.Error())
 	}

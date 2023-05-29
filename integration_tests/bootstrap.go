@@ -3,14 +3,15 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/tern/v2/migrate"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"os"
-	"testing"
-	"time"
 )
 
 const (

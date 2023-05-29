@@ -3,6 +3,10 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/AnatoliyRib1/movie-reviews/client"
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -11,9 +15,6 @@ import (
 	"github.com/AnatoliyRib1/movie-reviews/internal/server"
 	"github.com/hashicorp/consul/sdk/testutil/retry"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestServer(t *testing.T) {
@@ -88,8 +89,8 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	)
 	t.Run("auth.Register: success", func(t *testing.T) {
 		req := &contracts.RegisterUserRequest{
-			Username: "johndoe",
-			Email:    "johndoe@example.com",
+			Username: johnDoeUserNAme,
+			Email:    johnDoeEmail,
 			Password: johnDoePass,
 		}
 		u, err := c.RegisterUser(req)
@@ -104,8 +105,8 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 
 	t.Run("auth.Register: notUniq", func(t *testing.T) {
 		req := &contracts.RegisterUserRequest{
-			Username: "johndoe",
-			Email:    "johndoe@example.com",
+			Username: johnDoeUserNAme,
+			Email:    johnDoeEmail,
 			Password: johnDoePass,
 		}
 		_, err := c.RegisterUser(req)
@@ -122,9 +123,8 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	t.Run("users.GetUserByUserIdIfIserIsNotInDB", func(t *testing.T) {
-		_, err := c.GetUser(johnDoeId * 100)
-		requireBadRequestError(t, err, "")
-
+		_, err := c.GetUser(100)
+		requireNotFoundError(t, err, "user", "id", "100 not found")
 	})
 
 	t.Run("auth.Register: short username", func(t *testing.T) {
@@ -147,6 +147,19 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		require.NoError(t, err)
 		require.NotEmpty(t, res.AccessToken)
 		johnDoeToken = res.AccessToken
+	})
+
+	var adminToken string
+	t.Run("auth.Login.admin: success", func(t *testing.T) {
+		req := &contracts.LoginUserRequest{
+			Email:    cfg.Admin.Email,
+			Password: cfg.Admin.Password,
+		}
+		res, err := c.LoginUser(req)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, res.AccessToken)
+		adminToken = res.AccessToken
 	})
 
 	t.Run("users.UpdateUser: success", func(t *testing.T) {
@@ -196,23 +209,15 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	t.Run("users.setRole: unknown role", func(t *testing.T) {
-		req := &contracts.LoginUserRequest{
-			Email:    cfg.Admin.Email,
-			Password: cfg.Admin.Password,
-		}
-		res, err := c.LoginUser(req)
-		adminToken := res.AccessToken
-
 		req2 := &contracts.SetUserRoleRequest{
 			UserId: johnDoe.ID,
 			Role:   "editors",
 		}
-		err = c.SetRole(contracts.NewAuthenticated(req2, adminToken))
-		requireBadRequestError(t, err, "")
+		err := c.SetRole(contracts.NewAuthenticated(req2, adminToken))
+		requireBadRequestError(t, err, "role")
 	})
 
 	t.Run("users.DeleteUser: another user", func(t *testing.T) {
-
 		req := &contracts.DeleteUserRequest{
 			UserId: johnDoe.ID + 1,
 		}
@@ -221,7 +226,6 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	t.Run("users.DeleteUser: non-authenticated", func(t *testing.T) {
-
 		req := &contracts.DeleteUserRequest{
 			UserId: johnDoe.ID,
 		}
@@ -230,7 +234,6 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	t.Run("users.DeleteUser: success", func(t *testing.T) {
-
 		req := &contracts.DeleteUserRequest{
 			UserId: johnDoe.ID,
 		}

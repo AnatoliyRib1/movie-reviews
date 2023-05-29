@@ -3,10 +3,11 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/AnatoliyRib1/movie-reviews/contracts"
-	"github.com/go-resty/resty/v2"
 	"log"
 	"net/http"
+
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
+	"github.com/go-resty/resty/v2"
 )
 
 type Client struct {

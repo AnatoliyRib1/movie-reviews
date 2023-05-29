@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/AnatoliyRib1/movie-reviews/internal/server"
-	"golang.org/x/exp/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/AnatoliyRib1/movie-reviews/internal/server"
+	"golang.org/x/exp/slog"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/config"
 )
@@ -44,6 +45,7 @@ func main() {
 		os.Exit(1)
 	}
 }
+
 func failOnError(err error, msg string) {
 	if err != nil {
 		slog.Error(msg, "error", err)

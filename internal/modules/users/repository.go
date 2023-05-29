@@ -128,5 +128,4 @@ func errUserWithUserNameNotFound(userName string) error {
 
 func errUserWithEmailNotFound(userEmail string) error {
 	return apperrors.NotFound("user", "email", userEmail)
-
 }

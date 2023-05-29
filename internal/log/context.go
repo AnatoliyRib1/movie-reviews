@@ -3,8 +3,9 @@ package log
 import (
 	"context"
 	"fmt"
-	"golang.org/x/exp/slog"
 	"os"
+
+	"golang.org/x/exp/slog"
 )
 
 var contextKey = struct{}{}

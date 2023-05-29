@@ -1,8 +1,9 @@
 package users
 
 import (
-	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"net/http"
+
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
@@ -42,7 +43,7 @@ func (h Handler) Get(c echo.Context) error {
 	}
 	user, err := h.service.Get(c.Request().Context(), req.UserId)
 	if err != nil {
-		return apperrors.BadRequest(err)
+		return apperrors.NotFound("", "", err)
 	}
 	return c.JSON(http.StatusOK, user)
 }
@@ -57,7 +58,6 @@ func (h Handler) GetByUserName(c echo.Context) error {
 		return err
 	}
 	return c.JSON(http.StatusOK, user)
-
 }
 
 func (h Handler) SetRole(c echo.Context) error {

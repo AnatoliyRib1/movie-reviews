@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"net/http"
+
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 

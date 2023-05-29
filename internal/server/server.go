@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"time"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/config"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
@@ -17,8 +20,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/exp/slog"
 	"gopkg.in/validator.v2"
-	"net"
-	"time"
 )
 
 const (

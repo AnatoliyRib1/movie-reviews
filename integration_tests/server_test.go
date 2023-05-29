@@ -80,8 +80,11 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	var (
-		johnDoe     *contracts.User
-		johnDoePass = standardPassword
+		johnDoe         *contracts.User
+		johnDoePass     = standardPassword
+		johnDoeId       int
+		johnDoeEmail    = "johndoe@example.com"
+		johnDoeUserNAme = "johndoe"
 	)
 	t.Run("auth.Register: success", func(t *testing.T) {
 		req := &contracts.RegisterUserRequest{
@@ -92,10 +95,36 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		u, err := c.RegisterUser(req)
 		require.NoError(t, err)
 		johnDoe = u
+		johnDoeId = u.ID
 
 		require.Equal(t, req.Username, u.Username)
 		require.Equal(t, req.Email, u.Email)
 		require.Equal(t, users.UserRole, u.Role)
+	})
+
+	t.Run("auth.Register: notUniq", func(t *testing.T) {
+		req := &contracts.RegisterUserRequest{
+			Username: "johndoe",
+			Email:    "johndoe@example.com",
+			Password: johnDoePass,
+		}
+		_, err := c.RegisterUser(req)
+		requireAlreadyExists(t, err, "user email:johndoe already exists")
+	})
+
+	t.Run("users.GetUserByUserId", func(t *testing.T) {
+		u, err := c.GetUser(johnDoeId)
+		require.NoError(t, err)
+
+		require.Equal(t, johnDoeUserNAme, u.Username)
+		require.Equal(t, johnDoeEmail, u.Email)
+		require.Equal(t, users.UserRole, u.Role)
+	})
+
+	t.Run("users.GetUserByUserIdIfIserIsNotInDB", func(t *testing.T) {
+		_, err := c.GetUser(johnDoeId * 100)
+		requireBadRequestError(t, err, "")
+
 	})
 
 	t.Run("auth.Register: short username", func(t *testing.T) {
@@ -149,6 +178,33 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		err := c.UpdateUser(contracts.NewAuthenticated(req, johnDoeToken))
 		requireForbiddenError(t, err, "insufficient permissions")
 	})
+
+	t.Run("users.DeleteUser: another user", func(t *testing.T) {
+
+		req := &contracts.DeleteUserRequest{
+			UserId: johnDoe.ID + 1,
+		}
+		err := c.DeleteUser(contracts.NewAuthenticated(req, johnDoeToken))
+		requireForbiddenError(t, err, "insufficient permissions")
+	})
+
+	t.Run("users.DeleteUser: non-authenticated", func(t *testing.T) {
+
+		req := &contracts.DeleteUserRequest{
+			UserId: johnDoe.ID,
+		}
+		err := c.DeleteUser(contracts.NewAuthenticated(req, ""))
+		requireUnauthorizedError(t, err, "invalid or missing token")
+	})
+
+	t.Run("users.DeleteUser: success", func(t *testing.T) {
+
+		req := &contracts.DeleteUserRequest{
+			UserId: johnDoe.ID,
+		}
+		err := c.DeleteUser(contracts.NewAuthenticated(req, johnDoeToken))
+		require.NoError(t, err)
+	})
 }
 
 const standardPassword = "secuR3P@ss"
@@ -160,6 +216,10 @@ func requireNotFoundError(t *testing.T, err error, subject, key string, value an
 
 func requireUnauthorizedError(t *testing.T, err error, msg string) {
 	requireApiError(t, err, http.StatusUnauthorized, msg)
+}
+
+func requireAlreadyExists(t *testing.T, err error, msg string) {
+	requireApiError(t, err, http.StatusConflict, msg)
 }
 
 func requireForbiddenError(t *testing.T, err error, msg string) {

@@ -179,6 +179,22 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		requireForbiddenError(t, err, "insufficient permissions")
 	})
 
+	t.Run("users.setRole: success", func(t *testing.T) {
+		req := &contracts.LoginUserRequest{
+			Email:    cfg.Admin.Email,
+			Password: cfg.Admin.Password,
+		}
+		res, err := c.LoginUser(req)
+		adminToken := res.AccessToken
+
+		req2 := &contracts.SetUserRoleRequest{
+			UserId: johnDoe.ID,
+			Role:   "editor",
+		}
+		err = c.SetRole(contracts.NewAuthenticated(req2, adminToken))
+		require.NoError(t, err)
+	})
+
 	t.Run("users.DeleteUser: another user", func(t *testing.T) {
 
 		req := &contracts.DeleteUserRequest{

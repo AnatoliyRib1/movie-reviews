@@ -41,3 +41,13 @@ func (c *Client) DeleteUser(req *contracts.AuthenticatedRequest[*contracts.Delet
 
 	return err
 }
+
+func (c *Client) SetRole(req *contracts.AuthenticatedRequest[*contracts.SetUserRoleRequest]) error {
+	_, err := c.client.R().
+		SetAuthToken(req.AccessToken).
+		SetHeader("Content-Type", "application/json").
+		SetBody(req.Request).
+		Put(c.path("/api/users/%d/role/%s", req.Request.UserId, req.Request.Role))
+
+	return err
+}

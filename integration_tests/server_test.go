@@ -65,13 +65,12 @@ func runServer(t *testing.T, pgConnString string) {
 var (
 	johnDoe   *contracts.User
 	adminUser *contracts.User
-	err       error
 )
 
 func tests(t *testing.T, port int, cfg *config.Config) {
 	addr := fmt.Sprintf("http://localhost:%d", port)
 	c := client.New(addr)
-
+	var err error
 	t.Run("users.GetUserByUserName: admin", func(t *testing.T) {
 		adminUser, err = c.GetUserByUserName(cfg.Admin.Username)
 		require.NoError(t, err)

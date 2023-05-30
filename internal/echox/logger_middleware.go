@@ -26,7 +26,5 @@ func Logger(next echo.HandlerFunc) echo.HandlerFunc {
 		ctx := log.WithLogger(c.Request().Context(), logger)
 		c.SetRequest(c.Request().WithContext(ctx))
 		return next(c)
-
 	}
-
 }

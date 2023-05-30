@@ -43,7 +43,7 @@ func (r *Repository) GetExistingUserWithPasswordByEmail(ctx context.Context, ema
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.Role, &user.Bio)
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, errUserWithIdNotFound(int(user.ID))
+		return nil, errUserWithEmailNotFound(user.Email)
 	case err != nil:
 		return nil, apperrors.Internal(err)
 
@@ -68,6 +68,23 @@ func (r *Repository) GetExistingUserById(ctx context.Context, userId int) (*User
 	return &user, nil
 }
 
+func (r *Repository) GetExistingUserByUserName(ctx context.Context, userName string) (*User, error) {
+	var user User
+	query := "SELECT id, username, email,  role, bio FROM users WHERE username = $1 AND deleted_at IS NULL "
+	row := r.db.QueryRow(ctx, query, userName)
+
+	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.Bio)
+	switch {
+	case dbx.IsNoRows(err):
+		return nil, errUserWithUserNameNotFound(userName)
+	case err != nil:
+		return nil, apperrors.Internal(err)
+
+	}
+
+	return &user, nil
+}
+
 func (r *Repository) Delete(ctx context.Context, userId int) error {
 	n, err := r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL ", userId)
 	if err != nil {
@@ -79,7 +96,7 @@ func (r *Repository) Delete(ctx context.Context, userId int) error {
 	return nil
 }
 
-func (r *Repository) UpdateBio(ctx context.Context, userId int, bio string) error {
+func (r *Repository) Update(ctx context.Context, userId int, bio string) error {
 	n, err := r.db.Exec(ctx, "UPDATE users SET bio = $2 WHERE id = $1 AND deleted_at IS NULL", userId, bio)
 	if err != nil {
 		return apperrors.Internal(err)
@@ -103,4 +120,12 @@ func (r *Repository) SetRole(ctx context.Context, userId int, role string) error
 
 func errUserWithIdNotFound(userId int) error {
 	return apperrors.NotFound("user", "id", userId)
+}
+
+func errUserWithUserNameNotFound(userName string) error {
+	return apperrors.NotFound("user", "username", userName)
+}
+
+func errUserWithEmailNotFound(userEmail string) error {
+	return apperrors.NotFound("user", "email", userEmail)
 }

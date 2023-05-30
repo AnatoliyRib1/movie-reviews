@@ -2,17 +2,14 @@ package echox
 
 import (
 	"errors"
-	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 	"net/http"
+
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
+	"github.com/AnatoliyRib1/movie-reviews/internal/log"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/labstack/echo/v4"
 )
-
-type HttpError struct {
-	Message    string `json:"message"`
-	IncidentId string `json:"incidentId,omitempty"`
-}
 
 func ErrorHandler(err error, c echo.Context) {
 	if c.Response().Committed {
@@ -22,7 +19,7 @@ func ErrorHandler(err error, c echo.Context) {
 	if !errors.As(err, &appError) {
 		appError = apperrors.InternalWithoutStackTrace(err)
 	}
-	httpError := HttpError{
+	httpError := contracts.HttpError{
 		Message:    appError.SafeError(),
 		IncidentId: appError.IncidentId,
 	}
@@ -30,7 +27,6 @@ func ErrorHandler(err error, c echo.Context) {
 
 	if appError.Code == apperrors.InternalCode {
 		logger.Error("server error", "message", err.Error(), "incidentId", appError.IncidentId, "stacktrace", appError.StackTrace)
-
 	} else {
 		logger.Error("client error", "message", err.Error())
 	}

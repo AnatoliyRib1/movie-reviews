@@ -3,6 +3,8 @@ package auth
 import (
 	"net/http"
 
+	"github.com/AnatoliyRib1/movie-reviews/contracts"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/users"
@@ -14,7 +16,7 @@ type Handler struct {
 }
 
 func (h *Handler) Register(c echo.Context) error {
-	req, err := echox.BindAndValidate[RegisterRequest](c)
+	req, err := echox.BindAndValidate[contracts.RegisterUserRequest](c)
 	if err != nil {
 		return err
 	}
@@ -33,7 +35,7 @@ func (h *Handler) Register(c echo.Context) error {
 }
 
 func (h *Handler) Login(c echo.Context) error {
-	req, err := echox.BindAndValidate[LoginRequest](c)
+	req, err := echox.BindAndValidate[contracts.LoginUserRequest](c)
 	if err != nil {
 		return err
 	}

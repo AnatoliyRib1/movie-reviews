@@ -62,17 +62,23 @@ func runServer(t *testing.T, pgConnString string) {
 	require.NoError(t, err)
 }
 
+var (
+	johnDoe   *contracts.User
+	adminUser *contracts.User
+	err       error
+)
+
 func tests(t *testing.T, port int, cfg *config.Config) {
 	addr := fmt.Sprintf("http://localhost:%d", port)
 	c := client.New(addr)
 
 	t.Run("users.GetUserByUserName: admin", func(t *testing.T) {
-		u, err := c.GetUserByUserName(cfg.Admin.Username)
+		adminUser, err = c.GetUserByUserName(cfg.Admin.Username)
 		require.NoError(t, err)
 
-		require.Equal(t, cfg.Admin.Username, u.Username)
-		require.Equal(t, cfg.Admin.Email, u.Email)
-		require.Equal(t, users.AdminRole, u.Role)
+		require.Equal(t, cfg.Admin.Username, adminUser.Username)
+		require.Equal(t, cfg.Admin.Email, adminUser.Email)
+		require.Equal(t, users.AdminRole, adminUser.Role)
 	})
 
 	t.Run("users.GetUserByUserName: not found", func(t *testing.T) {
@@ -80,49 +86,40 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		requireNotFoundError(t, err, "user", "username", "not found")
 	})
 
-	var (
-		johnDoe         *contracts.User
-		johnDoePass     = standardPassword
-		johnDoeId       int
-		johnDoeEmail    = "johndoe@example.com"
-		johnDoeUserNAme = "johndoe"
-	)
 	t.Run("auth.Register: success", func(t *testing.T) {
 		req := &contracts.RegisterUserRequest{
-			Username: johnDoeUserNAme,
-			Email:    johnDoeEmail,
-			Password: johnDoePass,
+			Username: "johndoe",
+			Email:    "johndoe@example.com",
+			Password: standardPassword,
 		}
-		u, err := c.RegisterUser(req)
+		johnDoe, err = c.RegisterUser(req)
 		require.NoError(t, err)
-		johnDoe = u
-		johnDoeId = u.ID
 
-		require.Equal(t, req.Username, u.Username)
-		require.Equal(t, req.Email, u.Email)
-		require.Equal(t, users.UserRole, u.Role)
+		require.Equal(t, req.Username, johnDoe.Username)
+		require.Equal(t, req.Email, johnDoe.Email)
+		require.Equal(t, users.UserRole, johnDoe.Role)
 	})
 
-	t.Run("auth.Register: notUniq", func(t *testing.T) {
+	t.Run("auth.Register: notUnique", func(t *testing.T) {
 		req := &contracts.RegisterUserRequest{
-			Username: johnDoeUserNAme,
-			Email:    johnDoeEmail,
-			Password: johnDoePass,
+			Username: johnDoe.Username,
+			Email:    johnDoe.Email,
+			Password: standardPassword,
 		}
 		_, err := c.RegisterUser(req)
 		requireAlreadyExists(t, err, "user email:johndoe already exists")
 	})
 
 	t.Run("users.GetUserByUserId", func(t *testing.T) {
-		u, err := c.GetUser(johnDoeId)
+		u, err := c.GetUser(johnDoe.ID)
 		require.NoError(t, err)
 
-		require.Equal(t, johnDoeUserNAme, u.Username)
-		require.Equal(t, johnDoeEmail, u.Email)
-		require.Equal(t, users.UserRole, u.Role)
+		require.Equal(t, johnDoe.Username, u.Username)
+		require.Equal(t, johnDoe.Email, u.Email)
+		require.Equal(t, johnDoe.Role, u.Role)
 	})
 
-	t.Run("users.GetUserByUserIdIfIserIsNotInDB", func(t *testing.T) {
+	t.Run("users.GetUser: users doesn't exist", func(t *testing.T) {
 		_, err := c.GetUser(100)
 		requireNotFoundError(t, err, "user", "id", "100 not found")
 	})
@@ -141,7 +138,7 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	t.Run("auth.Login: success", func(t *testing.T) {
 		req := &contracts.LoginUserRequest{
 			Email:    johnDoe.Email,
-			Password: johnDoePass,
+			Password: standardPassword,
 		}
 		res, err := c.LoginUser(req)
 		require.NoError(t, err)
@@ -150,9 +147,9 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 	})
 
 	var adminToken string
-	t.Run("auth.Login.admin: success", func(t *testing.T) {
+	t.Run("auth.Login:admin", func(t *testing.T) {
 		req := &contracts.LoginUserRequest{
-			Email:    cfg.Admin.Email,
+			Email:    adminUser.Email,
 			Password: cfg.Admin.Password,
 		}
 		res, err := c.LoginUser(req)
@@ -192,19 +189,12 @@ func tests(t *testing.T, port int, cfg *config.Config) {
 		requireForbiddenError(t, err, "insufficient permissions")
 	})
 
-	t.Run("users.setRole: success", func(t *testing.T) {
-		req := &contracts.LoginUserRequest{
-			Email:    cfg.Admin.Email,
-			Password: cfg.Admin.Password,
-		}
-		res, err := c.LoginUser(req)
-		adminToken := res.AccessToken
-
-		req2 := &contracts.SetUserRoleRequest{
+	t.Run("users.SetRole: make John Doe an editor", func(t *testing.T) {
+		req := &contracts.SetUserRoleRequest{
 			UserId: johnDoe.ID,
 			Role:   "editor",
 		}
-		err = c.SetRole(contracts.NewAuthenticated(req2, adminToken))
+		err = c.SetRole(contracts.NewAuthenticated(req, adminToken))
 		require.NoError(t, err)
 	})
 

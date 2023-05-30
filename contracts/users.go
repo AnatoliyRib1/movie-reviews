@@ -11,6 +11,7 @@ type User struct {
 	CreatedAt time.Time  `json:"created_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 }
+
 type GetUserRequest struct {
 	UserId int `param:"userId" validate:"nonzero"`
 }

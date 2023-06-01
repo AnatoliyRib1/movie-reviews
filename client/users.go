@@ -2,7 +2,7 @@ package client
 
 import "github.com/AnatoliyRib1/movie-reviews/contracts"
 
-func (c *Client) GetUser(userId int) (*contracts.User, error) {
+func (c *Client) GetUserById(userId int) (*contracts.User, error) {
 	var u contracts.User
 
 	_, err := c.client.R().
@@ -42,7 +42,7 @@ func (c *Client) DeleteUser(req *contracts.AuthenticatedRequest[*contracts.Delet
 	return err
 }
 
-func (c *Client) SetRole(req *contracts.AuthenticatedRequest[*contracts.SetUserRoleRequest]) error {
+func (c *Client) SetUserRole(req *contracts.AuthenticatedRequest[*contracts.SetUserRoleRequest]) error {
 	_, err := c.client.R().
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").

@@ -44,23 +44,9 @@ func (h *Handler) Login(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, LoginResponse{AccessToken: token})
+	return c.JSON(http.StatusOK, contracts.LoginUserResponse{AccessToken: token})
 }
 
 func NewHandler(authService *Service) *Handler {
 	return &Handler{authService: authService}
-}
-
-type RegisterRequest struct {
-	Username string `json:"username" validate:"min=5,max=16"`
-	Email    string `json:"email" validate:"email"`
-	Password string `json:"password" validate:"password"`
-}
-type LoginRequest struct {
-	Email    string `json:"email" validate:"email"`
-	Password string `json:"password" validate:"password"`
-}
-
-type LoginResponse struct {
-	AccessToken string `json:"access_token"`
 }

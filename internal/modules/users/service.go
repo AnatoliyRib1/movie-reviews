@@ -18,7 +18,7 @@ func (s *Service) Create(ctx context.Context, user *UserWithPassword) error {
 	return s.repo.Create(ctx, user)
 }
 
-func (s *Service) GetUser(ctx context.Context, email string) (user *UserWithPassword, err error) {
+func (s *Service) GetExistingUserWithPasswordByEmail(ctx context.Context, email string) (user *UserWithPassword, err error) {
 	return s.repo.GetExistingUserWithPasswordByEmail(ctx, email)
 }
 
@@ -38,7 +38,7 @@ func (s *Service) Update(ctx context.Context, userId int, bio string) error {
 	return nil
 }
 
-func (s *Service) Get(ctx context.Context, userId int) (user *User, err error) {
+func (s *Service) GetExistingUserByID(ctx context.Context, userId int) (user *User, err error) {
 	return s.repo.GetExistingUserById(ctx, userId)
 }
 

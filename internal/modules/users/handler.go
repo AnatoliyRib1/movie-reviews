@@ -5,7 +5,6 @@ import (
 
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
 
-	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 
 	"github.com/labstack/echo/v4"
@@ -41,9 +40,9 @@ func (h Handler) Get(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	user, err := h.service.Get(c.Request().Context(), req.UserId)
+	user, err := h.service.GetExistingUserByID(c.Request().Context(), req.UserId)
 	if err != nil {
-		return apperrors.NotFound("", "", err)
+		return err
 	}
 	return c.JSON(http.StatusOK, user)
 }
@@ -60,6 +59,18 @@ func (h Handler) GetByUserName(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
+func (h Handler) GetByUserEmail(c echo.Context) error {
+	req, err := echox.BindAndValidate[contracts.LoginUserRequest](c)
+	if err != nil {
+		return err
+	}
+	user, err := h.service.GetExistingUserWithPasswordByEmail(c.Request().Context(), req.Email)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, user)
+}
+
 func (h Handler) SetRole(c echo.Context) error {
 	req, err := echox.BindAndValidate[contracts.SetUserRoleRequest](c)
 	if err != nil {
@@ -67,17 +78,4 @@ func (h Handler) SetRole(c echo.Context) error {
 	}
 
 	return h.service.SetRole(c.Request().Context(), req.UserId, req.Role)
-}
-
-type DeleteOrGetRequest struct {
-	UserId int `param:"userId" validate:"nonzero"`
-}
-type UpdateUserRequest struct {
-	UserId int     `param:"userId" validate:"nonzero"`
-	Bio    *string `json:"bio"`
-}
-
-type SetUserRoleRequest struct {
-	UserId int    `param:"userId" validate:"nonzero"`
-	Role   string `param:"role" validate:"role"`
 }

@@ -1,6 +1,11 @@
 .idea
 .env
+.dockerignore
 docker-compose.yml
 Dockerfile
 .gitignore
 tern
+.github
+.git
+client
+integration_tests

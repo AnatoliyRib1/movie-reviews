@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/config"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
@@ -52,6 +54,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	jwtService := jwt.NewService(cfg.Jwt.Secret, cfg.Jwt.AccessExpiration)
 	usersModule := users.NewModule(db)
 	authModule := auth.NewModule(jwtService, usersModule.Service)
+	genresModule := genres.NewModule(db)
 
 	if err = createInitialAdminUser(cfg.Admin, authModule.Service); err != nil {
 		return nil, withClosers(closers, fmt.Errorf("create initial admin user: %w", err))
@@ -78,6 +81,13 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	api.PUT("/users/:userId", usersModule.Handler.Update, auth.Self)
 	api.DELETE("/users/:userId", usersModule.Handler.Delete, auth.Self)
 	api.PUT("/users/:userId/role/:role", usersModule.Handler.SetRole, auth.Admin)
+
+	// Genres API routes
+	api.GET("/genres", genresModule.Handler.GetAll)
+	api.GET("/genres/:genreId", genresModule.Handler.Get)
+	api.POST("/genres", genresModule.Handler.Create, auth.Editor)
+	api.PUT("/genres/:genreId", genresModule.Handler.Update, auth.Editor)
+	api.DELETE("/genres/:genreId", genresModule.Handler.Delete, auth.Editor)
 
 	return &Server{e: e, cfg: cfg, closers: closers}, nil
 }

@@ -27,7 +27,7 @@ func (r *Repository) Create(ctx context.Context, user *UserWithPassword) error {
 	case dbx.IsUniqueViolation(err, "email"):
 		return apperrors.AlreadyExists("user", "email", user.Email)
 	case dbx.IsUniqueViolation(err, "username"):
-		return apperrors.AlreadyExists("user", "email", user.Username)
+		return apperrors.AlreadyExists("user", "username", user.Username)
 	case err != nil:
 		return apperrors.Internal(err)
 
@@ -43,7 +43,7 @@ func (r *Repository) GetExistingUserWithPasswordByEmail(ctx context.Context, ema
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.Role, &user.Bio)
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, errUserWithEmailNotFound(user.Email)
+		return nil, errUserWithEmailNotFound(email)
 	case err != nil:
 		return nil, apperrors.Internal(err)
 

@@ -22,31 +22,31 @@ func (s *Service) GetExistingUserWithPasswordByEmail(ctx context.Context, email 
 	return s.repo.GetExistingUserWithPasswordByEmail(ctx, email)
 }
 
-func (s *Service) Delete(ctx context.Context, userId int) error {
-	if err := s.repo.Delete(ctx, userId); err != nil {
+func (s *Service) Delete(ctx context.Context, userID int) error {
+	if err := s.repo.Delete(ctx, userID); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("user deleted", "userId", userId)
+	log.FromContext(ctx).Info("user deleted", "userId")
 	return nil
 }
 
-func (s *Service) Update(ctx context.Context, userId int, bio string) error {
-	if err := s.repo.Update(ctx, userId, bio); err != nil {
+func (s *Service) Update(ctx context.Context, userID int, bio string) error {
+	if err := s.repo.Update(ctx, userID, bio); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("user updated", "userId", userId)
+	log.FromContext(ctx).Info("user updated", "userId")
 	return nil
 }
 
-func (s *Service) GetExistingUserByID(ctx context.Context, userId int) (user *User, err error) {
-	return s.repo.GetExistingUserById(ctx, userId)
+func (s *Service) GetExistingUserByID(ctx context.Context, userID int) (user *User, err error) {
+	return s.repo.GetExistingUserByID(ctx, userID)
 }
 
-func (s *Service) SetRole(ctx context.Context, userId int, role string) error {
-	if err := s.repo.SetRole(ctx, userId, role); err != nil {
+func (s *Service) SetRole(ctx context.Context, userID int, role string) error {
+	if err := s.repo.SetRole(ctx, userID, role); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("user role updated", "userId", userId, "role", role)
+	log.FromContext(ctx).Info("user role updated", "userId", userID, "role", role)
 	return nil
 }
 

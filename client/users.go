@@ -2,12 +2,12 @@ package client
 
 import "github.com/AnatoliyRib1/movie-reviews/contracts"
 
-func (c *Client) GetUserById(userId int) (*contracts.User, error) {
+func (c *Client) GetUserByID(userID int) (*contracts.User, error) {
 	var u contracts.User
 
 	_, err := c.client.R().
 		SetResult(&u).
-		Get(c.path("/api/users/%d", userId))
+		Get(c.path("/api/users/%d", userID))
 
 	return &u, err
 }
@@ -27,7 +27,7 @@ func (c *Client) UpdateUser(req *contracts.AuthenticatedRequest[*contracts.Updat
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Put(c.path("/api/users/%d", req.Request.UserId))
+		Put(c.path("/api/users/%d", req.Request.UserID))
 
 	return err
 }
@@ -37,7 +37,7 @@ func (c *Client) DeleteUser(req *contracts.AuthenticatedRequest[*contracts.Delet
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Delete(c.path("/api/users/%d", req.Request.UserId))
+		Delete(c.path("/api/users/%d", req.Request.UserID))
 
 	return err
 }
@@ -47,7 +47,7 @@ func (c *Client) SetUserRole(req *contracts.AuthenticatedRequest[*contracts.SetU
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Put(c.path("/api/users/%d/role/%s", req.Request.UserId, req.Request.Role))
+		Put(c.path("/api/users/%d/role/%s", req.Request.UserID, req.Request.Role))
 
 	return err
 }

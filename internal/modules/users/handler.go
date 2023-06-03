@@ -23,7 +23,7 @@ func (h Handler) Delete(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return h.service.Delete(c.Request().Context(), req.UserId)
+	return h.service.Delete(c.Request().Context(), req.UserID)
 }
 
 func (h Handler) Update(c echo.Context) error {
@@ -32,7 +32,7 @@ func (h Handler) Update(c echo.Context) error {
 		return err
 	}
 
-	return h.service.Update(c.Request().Context(), req.UserId, *req.Bio)
+	return h.service.Update(c.Request().Context(), req.UserID, *req.Bio)
 }
 
 func (h Handler) Get(c echo.Context) error {
@@ -40,7 +40,7 @@ func (h Handler) Get(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	user, err := h.service.GetExistingUserByID(c.Request().Context(), req.UserId)
+	user, err := h.service.GetExistingUserByID(c.Request().Context(), req.UserID)
 	if err != nil {
 		return err
 	}
@@ -77,5 +77,5 @@ func (h Handler) SetRole(c echo.Context) error {
 		return err
 	}
 
-	return h.service.SetRole(c.Request().Context(), req.UserId, req.Role)
+	return h.service.SetRole(c.Request().Context(), req.UserID, req.Role)
 }

@@ -1,4 +1,4 @@
-package integration_tests
+package tests
 
 import (
 	"net/http"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
+func usersAPIChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	t.Run("users.GetUserByUserName: admin", func(t *testing.T) {
 		u, err := c.GetUserByUserName(cfg.Admin.Username)
 		require.NoError(t, err)
@@ -27,23 +27,23 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 		requireNotFoundError(t, err, "user", "username", "notfound")
 	})
 
-	t.Run("users.GetUserById: admin", func(t *testing.T) {
-		u, err := c.GetUserById(admin.ID)
+	t.Run("users.GetUserByID: admin", func(t *testing.T) {
+		u, err := c.GetUserByID(admin.ID)
 		require.NoError(t, err)
 
 		require.Equal(t, admin, u)
 	})
 
-	t.Run("users.GetUserById: not found", func(t *testing.T) {
-		nonExistingId := 1000
-		_, err := c.GetUserById(nonExistingId)
-		requireNotFoundError(t, err, "user", "id", nonExistingId)
+	t.Run("users.GetUserByID: not found", func(t *testing.T) {
+		nonExistingID := 1000
+		_, err := c.GetUserByID(nonExistingID)
+		requireNotFoundError(t, err, "user", "id", nonExistingID)
 	})
 
 	t.Run("users.UpdateUser: success", func(t *testing.T) {
 		bio := "I'm John Doe"
 		req := &contracts.UpdateUserRequest{
-			UserId: johnDoe.ID,
+			UserID: johnDoe.ID,
 			Bio:    &bio,
 		}
 		err := c.UpdateUser(contracts.NewAuthenticated(req, johnDoeToken))
@@ -56,7 +56,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	t.Run("users.UpdateUser: non-authenticated", func(t *testing.T) {
 		bio := "I'm John Doe"
 		req := &contracts.UpdateUserRequest{
-			UserId: johnDoe.ID,
+			UserID: johnDoe.ID,
 			Bio:    &bio,
 		}
 		err := c.UpdateUser(contracts.NewAuthenticated(req, ""))
@@ -66,7 +66,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	t.Run("users.UpdateUser: another user", func(t *testing.T) {
 		bio := "I'm John Doe"
 		req := &contracts.UpdateUserRequest{
-			UserId: johnDoe.ID + 1,
+			UserID: johnDoe.ID + 1,
 			Bio:    &bio,
 		}
 		err := c.UpdateUser(contracts.NewAuthenticated(req, johnDoeToken))
@@ -76,7 +76,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	t.Run("users.UpdateUser: by admin", func(t *testing.T) {
 		bio := "Updated by admin"
 		req := &contracts.UpdateUserRequest{
-			UserId: johnDoe.ID,
+			UserID: johnDoe.ID,
 			Bio:    &bio,
 		}
 
@@ -89,7 +89,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 
 	t.Run("users.SetUserRole: John Doe to editor", func(t *testing.T) {
 		req := &contracts.SetUserRoleRequest{
-			UserId: johnDoe.ID,
+			UserID: johnDoe.ID,
 			Role:   users.EditorRole,
 		}
 		err := c.SetUserRole(contracts.NewAuthenticated(req, adminToken))
@@ -103,7 +103,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	})
 	t.Run("users.SetUserRole: bad role", func(t *testing.T) {
 		req := &contracts.SetUserRoleRequest{
-			UserId: johnDoe.ID,
+			UserID: johnDoe.ID,
 			Role:   "superuser",
 		}
 		err := c.SetUserRole(contracts.NewAuthenticated(req, adminToken))
@@ -113,7 +113,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 	randomUser := registerRandomUser(t, c)
 	t.Run("users.DeleteUser: another user", func(t *testing.T) {
 		req := &contracts.DeleteUserRequest{
-			UserId: randomUser.ID,
+			UserID: randomUser.ID,
 		}
 		err := c.DeleteUser(contracts.NewAuthenticated(req, johnDoeToken))
 		requireForbiddenError(t, err, "insufficient permissions")
@@ -124,7 +124,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 
 	t.Run("users.DeleteUser: by admin", func(t *testing.T) {
 		req := &contracts.DeleteUserRequest{
-			UserId: randomUser.ID,
+			UserID: randomUser.ID,
 		}
 		err := c.DeleteUser(contracts.NewAuthenticated(req, adminToken))
 		require.NoError(t, err)
@@ -135,7 +135,7 @@ func usersApiChecks(t *testing.T, c *client.Client, cfg *config.Config) {
 }
 
 func getUser(t *testing.T, c *client.Client, id int) *contracts.User {
-	u, err := c.GetUserById(id)
+	u, err := c.GetUserByID(id)
 	if err != nil {
 		cerr, ok := err.(*client.Error)
 		require.True(t, ok)

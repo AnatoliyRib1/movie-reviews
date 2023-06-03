@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
@@ -20,7 +19,7 @@ func New(url string) *Client {
 	rc := resty.NewWithClient(hc)
 	rc.OnAfterResponse(func(client *resty.Client, response *resty.Response) error {
 		if response.IsError() {
-			herr := contracts.HttpError{}
+			herr := contracts.HTTPError{}
 			_ = json.Unmarshal(response.Body(), &herr)
 
 			return &Error{Code: response.StatusCode(), Message: herr.Message}
@@ -37,11 +36,4 @@ func New(url string) *Client {
 
 func (c *Client) path(f string, args ...any) string {
 	return fmt.Sprintf(c.baseURL+f, args...)
-}
-
-func logRequest(client *resty.Client, request *resty.Request) error {
-	log.Printf("Request URL: %s", request.URL)
-	log.Printf("Request Method: %s", request.Method)
-	log.Printf("Request Body: %v", request.Body)
-	return nil
 }

@@ -13,19 +13,19 @@ type User struct {
 }
 
 type GetUserRequest struct {
-	UserId int `param:"userId" validate:"nonzero"`
+	UserID int `param:"userId" validate:"nonzero"`
 }
 type GetUserByUserNameRequest struct {
 	UserName string `param:"userName" validate:"nonzero"`
 }
 type UpdateUserRequest struct {
-	UserId int     `param:"userId" validate:"nonzero"`
+	UserID int     `param:"userId" validate:"nonzero"`
 	Bio    *string `json:"bio"`
 }
 type DeleteUserRequest struct {
-	UserId int `param:"userId" validate:"nonzero"`
+	UserID int `param:"userId" validate:"nonzero"`
 }
 type SetUserRoleRequest struct {
-	UserId int    `param:"userId" validate:"nonzero"`
+	UserID int    `param:"userId" validate:"nonzero"`
 	Role   string `param:"role" validate:"role"`
 }

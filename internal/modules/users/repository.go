@@ -51,15 +51,15 @@ func (r *Repository) GetExistingUserWithPasswordByEmail(ctx context.Context, ema
 	return user, nil
 }
 
-func (r *Repository) GetExistingUserById(ctx context.Context, userId int) (*User, error) {
+func (r *Repository) GetExistingUserByID(ctx context.Context, userID int) (*User, error) {
 	var user User
 	query := "SELECT id, username, email,  role, bio FROM users WHERE id = $1 AND deleted_at IS NULL "
-	row := r.db.QueryRow(ctx, query, userId)
+	row := r.db.QueryRow(ctx, query, userID)
 
 	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.Role, &user.Bio)
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, errUserWithIdNotFound(userId)
+		return nil, errUserWithIDNotFound(userID)
 	case err != nil:
 		return nil, apperrors.Internal(err)
 
@@ -85,41 +85,41 @@ func (r *Repository) GetExistingUserByUserName(ctx context.Context, userName str
 	return &user, nil
 }
 
-func (r *Repository) Delete(ctx context.Context, userId int) error {
-	n, err := r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL ", userId)
+func (r *Repository) Delete(ctx context.Context, userID int) error {
+	n, err := r.db.Exec(ctx, "UPDATE users SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL ", userID)
 	if err != nil {
 		return apperrors.Internal(err)
 	}
 	if n.RowsAffected() == 0 {
-		return errUserWithIdNotFound(userId)
+		return errUserWithIDNotFound(userID)
 	}
 	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, userId int, bio string) error {
-	n, err := r.db.Exec(ctx, "UPDATE users SET bio = $2 WHERE id = $1 AND deleted_at IS NULL", userId, bio)
+func (r *Repository) Update(ctx context.Context, userID int, bio string) error {
+	n, err := r.db.Exec(ctx, "UPDATE users SET bio = $2 WHERE id = $1 AND deleted_at IS NULL", userID, bio)
 	if err != nil {
 		return apperrors.Internal(err)
 	}
 	if n.RowsAffected() == 0 {
-		return errUserWithIdNotFound(userId)
+		return errUserWithIDNotFound(userID)
 	}
 	return nil
 }
 
-func (r *Repository) SetRole(ctx context.Context, userId int, role string) error {
-	n, err := r.db.Exec(ctx, "UPDATE users SET role = $2 WHERE id = $1 AND deleted_at IS NULL", userId, role)
+func (r *Repository) SetRole(ctx context.Context, userID int, role string) error {
+	n, err := r.db.Exec(ctx, "UPDATE users SET role = $2 WHERE id = $1 AND deleted_at IS NULL", userID, role)
 	if err != nil {
 		return apperrors.Internal(err)
 	}
 	if n.RowsAffected() == 0 {
-		return errUserWithIdNotFound(userId)
+		return errUserWithIDNotFound(userID)
 	}
 	return nil
 }
 
-func errUserWithIdNotFound(userId int) error {
-	return apperrors.NotFound("user", "id", userId)
+func errUserWithIDNotFound(userID int) error {
+	return apperrors.NotFound("user", "id", userID)
 }
 
 func errUserWithUserNameNotFound(userName string) error {

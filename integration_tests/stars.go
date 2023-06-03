@@ -59,15 +59,15 @@ func starsAPIChecks(t *testing.T, c *client.Client) {
 			require.NotEmpty(t, star.CreatedAd)
 		}
 	})
-	/*
-		t.Run("stars.GetStar: success", func(t *testing.T) {
-			for _, star := range []*contracts.Star{lucas, hamill, mcgregor} {
-				s, err := c.GetStar(star.ID)
-				require.NoError(t, err)
-				require.Equal(t, star, s)
-			}
-		})
-	*/
+
+	t.Run("stars.GetStar: success", func(t *testing.T) {
+		for _, star := range []*contracts.Star{lucas, hamill, mcgregor} {
+			s, err := c.GetStar(star.ID)
+			require.NoError(t, err)
+			require.Equal(t, star, s)
+		}
+	})
+
 	t.Run("stars.GetStar: not found", func(t *testing.T) {
 		nonExistingID := 1000
 		_, err := c.GetStar(nonExistingID)

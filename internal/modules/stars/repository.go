@@ -41,10 +41,10 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 */
 func (r *Repository) GetByID(ctx context.Context, id int) (*Star, error) {
 	var star Star
-	query := "SELECT first_name ,middle_name, last_name, birth_date,birth_place, death_date, bio, created_at FROM stars WHERE id = $1"
+	query := "SELECT id, first_name ,middle_name, last_name, birth_date,birth_place, death_date, bio, created_at FROM stars WHERE id = $1"
 	row := r.db.QueryRow(ctx, query, id)
 
-	err := row.Scan(&star.FirstName, &star.MiddleName, &star.LastName, &star.BirthDate, &star.BirthPlace, &star.DeathDate, &star.Bio, &star.CreatedAd)
+	err := row.Scan(&star.ID, &star.FirstName, &star.MiddleName, &star.LastName, &star.BirthDate, &star.BirthPlace, &star.DeathDate, &star.Bio, &star.CreatedAd)
 	switch {
 	case dbx.IsNoRows(err):
 		return nil, errStarWithIDNotFound(id)

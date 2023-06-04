@@ -11,13 +11,13 @@ var errForbidden = apperrors.Forbidden("insufficient permissions")
 
 func Self(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		userId := c.Param("userId")
+		userID := c.Param("userId")
 
 		claims := jwt.GetClaims(c)
 		if claims == nil {
 			return apperrors.Unauthorized("invalid or missing token")
 		}
-		if claims.Role == users.AdminRole || claims.Subject == userId {
+		if claims.Role == users.AdminRole || claims.Subject == userID {
 			return next(c)
 		}
 

@@ -38,7 +38,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]*Genre, error) {
 	return genres, err
 }
 
-func (r *Repository) GetById(ctx context.Context, id int) (*Genre, error) {
+func (r *Repository) GetByID(ctx context.Context, id int) (*Genre, error) {
 	var genre Genre
 	query := "SELECT id, name FROM genres WHERE id = $1  "
 	row := r.db.QueryRow(ctx, query, id)
@@ -46,7 +46,7 @@ func (r *Repository) GetById(ctx context.Context, id int) (*Genre, error) {
 	err := row.Scan(&genre.ID, &genre.Name)
 	switch {
 	case dbx.IsNoRows(err):
-		return nil, errGenreWithIdNotFound(id)
+		return nil, errGenreWithIDNotFound(id)
 	case err != nil:
 		return nil, apperrors.Internal(err)
 
@@ -68,28 +68,28 @@ func (r *Repository) Create(ctx context.Context, genre *Genre) error {
 	return nil
 }
 
-func (r *Repository) Update(ctx context.Context, genreId int, name string) error {
-	n, err := r.db.Exec(ctx, "UPDATE genres SET name = $2 WHERE id = $1 ", genreId, name)
+func (r *Repository) Update(ctx context.Context, genreID int, name string) error {
+	n, err := r.db.Exec(ctx, "UPDATE genres SET name = $2 WHERE id = $1 ", genreID, name)
 	if err != nil {
 		return apperrors.Internal(err)
 	}
 	if n.RowsAffected() == 0 {
-		return errGenreWithIdNotFound(genreId)
+		return errGenreWithIDNotFound(genreID)
 	}
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, genreId int) error {
-	n, err := r.db.Exec(ctx, "DELETE FROM genres WHERE id = $1 ", genreId)
+func (r *Repository) Delete(ctx context.Context, genreID int) error {
+	n, err := r.db.Exec(ctx, "DELETE FROM genres WHERE id = $1 ", genreID)
 	if err != nil {
 		return apperrors.Internal(err)
 	}
 	if n.RowsAffected() == 0 {
-		return errGenreWithIdNotFound(genreId)
+		return errGenreWithIDNotFound(genreID)
 	}
 	return nil
 }
 
-func errGenreWithIdNotFound(genreId int) error {
-	return apperrors.NotFound("genre", "id", genreId)
+func errGenreWithIDNotFound(genreID int) error {
+	return apperrors.NotFound("genre", "id", genreID)
 }

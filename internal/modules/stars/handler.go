@@ -1,4 +1,4 @@
-package genres
+package stars
 
 import (
 	"net/http"
@@ -16,38 +16,50 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) GetAll(c echo.Context) error {
-	genres, err := h.service.GetAll(c.Request().Context())
-	if err != nil {
-		return err
+/*
+	func (h *Handler) GetAll(c echo.Context) error {
+		genres, err := h.service.GetAll(c.Request().Context())
+		if err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, genres)
 	}
-	return c.JSON(http.StatusOK, genres)
-}
-
+*/
 func (h *Handler) Get(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.GetGenreRequest](c)
+	req, err := echox.BindAndValidate[contracts.GetStarRequest](c)
 	if err != nil {
 		return err
 	}
-	genre, err := h.service.GetByID(c.Request().Context(), req.GenreID)
+	star, err := h.service.GetByID(c.Request().Context(), req.ID)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, genre)
+	return c.JSON(http.StatusOK, star)
 }
 
 func (h *Handler) Create(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.CreateGenreRequest](c)
+	req, err := echox.BindAndValidate[contracts.CreateStarRequest](c)
 	if err != nil {
 		return err
 	}
-	genre, err := h.service.Create(c.Request().Context(), req.Name)
+	star := &Star{
+		FirstName:  req.FirstName,
+		MiddleName: req.MiddleName,
+		LastName:   req.LastName,
+		BirthDate:  req.BirthDate,
+		BirthPlace: req.BirthPlace,
+		DeathDate:  req.DeathDate,
+		Bio:        req.Bio,
+	}
+	err = h.service.Create(c.Request().Context(), star)
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusCreated, genre)
+
+	return c.JSON(http.StatusCreated, star)
 }
 
+/*
 func (h *Handler) Delete(c echo.Context) error {
 	req, err := echox.BindAndValidate[contracts.DeleteGenreRequest](c)
 	if err != nil {
@@ -70,3 +82,5 @@ func (h *Handler) Update(c echo.Context) error {
 	}
 	return c.NoContent(http.StatusOK)
 }
+
+*/

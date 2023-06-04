@@ -19,23 +19,23 @@ func ErrorHandler(err error, c echo.Context) {
 	if !errors.As(err, &appError) {
 		appError = apperrors.InternalWithoutStackTrace(err)
 	}
-	httpError := contracts.HttpError{
+	httpError := contracts.HTTPError{
 		Message:    appError.SafeError(),
-		IncidentId: appError.IncidentId,
+		IncidentID: appError.IncidentID,
 	}
 	logger := log.FromContext(c.Request().Context())
 
 	if appError.Code == apperrors.InternalCode {
-		logger.Error("server error", "message", err.Error(), "incidentId", appError.IncidentId, "stacktrace", appError.StackTrace)
+		logger.Error("server error", "message", err.Error(), "incidentId", appError.IncidentID, "stacktrace", appError.StackTrace)
 	} else {
 		logger.Error("client error", "message", err.Error())
 	}
-	if err = c.JSON(toHttpStatus(appError.Code), httpError); err != nil {
+	if err = c.JSON(toHTTPStatus(appError.Code), httpError); err != nil {
 		c.Logger().Error(err)
 	}
 }
 
-func toHttpStatus(code apperrors.Code) int {
+func toHTTPStatus(code apperrors.Code) int {
 	switch code {
 	case apperrors.InternalCode:
 		return http.StatusInternalServerError

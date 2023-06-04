@@ -52,13 +52,13 @@ func password(v interface{}, _ string) error {
 
 	for _, required := range passwordRequiredEntries {
 		if !strings.ContainsAny(s, required.chars) {
-			return fmt.Errorf("password must contain at least one $s", required.name)
+			return fmt.Errorf("password must contain at least one %s", required.name)
 		}
 	}
 	return nil
 }
 
-func email(v interface{}, param string) error {
+func email(v interface{}, _ string) error {
 	s, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("email only validates string")
@@ -71,14 +71,14 @@ func email(v interface{}, param string) error {
 	return err
 }
 
-func role(v interface{}, param string) error {
+func role(v interface{}, _ string) error {
 	s, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("email only validates string")
 	}
 
 	if !(s == users.AdminRole || s == users.EditorRole || s == users.UserRole) {
-		return fmt.Errorf("you can't create new roles: %d ", s)
+		return fmt.Errorf("you can't create new roles: %s ", s)
 	}
 
 	return nil

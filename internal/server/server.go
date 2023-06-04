@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -45,7 +47,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	validation.SetupValidators()
 
 	var closers []func() error
-	db, err := getDb(ctx, cfg.DbUrl)
+	db, err := getDb(ctx, cfg.DbURL)
 	if err != nil {
 		return nil, fmt.Errorf("connect to db: %w", err)
 	}
@@ -55,6 +57,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	usersModule := users.NewModule(db)
 	authModule := auth.NewModule(jwtService, usersModule.Service)
 	genresModule := genres.NewModule(db)
+	starsModule := stars.NewModule(db)
 
 	if err = createInitialAdminUser(cfg.Admin, authModule.Service); err != nil {
 		return nil, withClosers(closers, fmt.Errorf("create initial admin user: %w", err))
@@ -88,6 +91,13 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	api.POST("/genres", genresModule.Handler.Create, auth.Editor)
 	api.PUT("/genres/:genreId", genresModule.Handler.Update, auth.Editor)
 	api.DELETE("/genres/:genreId", genresModule.Handler.Delete, auth.Editor)
+
+	// Stars API routes
+	// api.GET("/stars", starsModule.Handler.GetAll)
+	api.GET("/stars/:starId", starsModule.Handler.Get)
+	api.POST("/stars", starsModule.Handler.Create, auth.Editor)
+	// api.PUT("/stars/:starId", starsModule.Handler.Update, auth.Editor)
+	// api.DELETE("/stars/:starId", starsModule.Handler.Delete, auth.Editor)
 
 	return &Server{e: e, cfg: cfg, closers: closers}, nil
 }

@@ -6,15 +6,15 @@ type Genre struct {
 }
 
 type GetGenreRequest struct {
-	GenreId int `param:"genreId" validate:"nonzero"`
+	GenreID int `param:"genreId" validate:"nonzero"`
 }
 type CreateGenreRequest struct {
 	Name string `json:"name" validate:"min=3,max=32"`
 }
 type UpdateGenreRequest struct {
-	GenreId int    `param:"genreId" validate:"nonzero"`
+	GenreID int    `param:"genreId" validate:"nonzero"`
 	Name    string `json:"name" validate:"min=3,max=32"`
 }
 type DeleteGenreRequest struct {
-	GenreId int `param:"genreId" validate:"nonzero"`
+	GenreID int `param:"genreId" validate:"nonzero"`
 }

@@ -18,8 +18,8 @@ func (s *Service) GetAll(ctx context.Context) ([]*Genre, error) {
 	return s.repo.GetAll(ctx)
 }
 
-func (s *Service) GetByID(ctx context.Context, genreId int) (genre *Genre, err error) {
-	return s.repo.GetById(ctx, genreId)
+func (s *Service) GetByID(ctx context.Context, genreID int) (genre *Genre, err error) {
+	return s.repo.GetByID(ctx, genreID)
 }
 
 func (s *Service) Create(ctx context.Context, name string) (genre *Genre, err error) {
@@ -31,18 +31,18 @@ func (s *Service) Create(ctx context.Context, name string) (genre *Genre, err er
 	return genre, nil
 }
 
-func (s *Service) Update(ctx context.Context, genreId int, name string) error {
-	if err := s.repo.Update(ctx, genreId, name); err != nil {
+func (s *Service) Update(ctx context.Context, genreID int, name string) error {
+	if err := s.repo.Update(ctx, genreID, name); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("genre updated", "genreId", genreId, "genreName", name)
+	log.FromContext(ctx).Info("genre updated", "genreId", genreID, "genreName", name)
 	return nil
 }
 
-func (s *Service) Delete(ctx context.Context, genreId int) error {
-	if err := s.repo.Delete(ctx, genreId); err != nil {
+func (s *Service) Delete(ctx context.Context, genreID int) error {
+	if err := s.repo.Delete(ctx, genreID); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("genre deleted", "genreId", genreId)
+	log.FromContext(ctx).Info("genre deleted", "genreId", genreID)
 	return nil
 }

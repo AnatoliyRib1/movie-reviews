@@ -45,6 +45,9 @@ func (s *Service) Login(ctx context.Context, email string, password string) (str
 		}
 		return "", apperrors.Internal(err)
 	}
-	accessToken, _ := s.jwtService.GenerateToken(int(user.ID), user.Role)
+	accessToken, err := s.jwtService.GenerateToken(int(user.ID), user.Role)
+	if err != nil {
+		return "", apperrors.Internal(err)
+	}
 	return accessToken, nil
 }

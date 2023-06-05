@@ -11,6 +11,6 @@ type Star struct {
 	BirthPlace *string    `json:"birth_place,omitempty" `
 	DeathDate  *time.Time `json:"death_date,omitempty"`
 	Bio        *string    `json:"bio,omitempty"`
-	CreatedAd  time.Time  `json:"created_ad"`
-	DeletedAd  *time.Time `json:"deleted_ad,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
 }

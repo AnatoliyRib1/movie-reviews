@@ -12,17 +12,17 @@ func (c *Client) GetStar(starID int) (*contracts.Star, error) {
 	return &g, err
 }
 
-/*
-	func (c *Client) GetGenres() ([]*contracts.Genre, error) {
-		var g []*contracts.Genre
+func (c *Client) GetStars(req *contracts.GetStarsRequest) (*contracts.PaginatedResponse[contracts.Star], error) {
+	var res contracts.PaginatedResponse[contracts.Star]
 
-		_, err := c.client.R().
-			SetResult(&g).
-			Get(c.path("/api/genres"))
+	_, err := c.client.R().
+		SetResult(&res).
+		SetQueryParams(req.PaginatedRequest.ToQueryParams()).
+		Get(c.path("/api/stars"))
 
-		return g, err
-	}
-*/
+	return &res, err
+}
+
 func (c *Client) CreateStar(req *contracts.AuthenticatedRequest[*contracts.CreateStarRequest]) (*contracts.Star, error) {
 	var g *contracts.Star
 	_, err := c.client.R().
@@ -34,24 +34,22 @@ func (c *Client) CreateStar(req *contracts.AuthenticatedRequest[*contracts.Creat
 	return g, err
 }
 
-/*
-func (c *Client) UpdateGenre(req *contracts.AuthenticatedRequest[*contracts.UpdateGenreRequest]) error {
+func (c *Client) UpdateStar(req *contracts.AuthenticatedRequest[*contracts.UpdateStarRequest]) error {
 	_, err := c.client.R().
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Put(c.path("/api/genres/%d", req.Request.GenreID))
+		Put(c.path("/api/stars/%d", req.Request.ID))
 
 	return err
 }
 
-func (c *Client) DeleteGenre(req *contracts.AuthenticatedRequest[*contracts.DeleteGenreRequest]) error {
+func (c *Client) DeleteStar(req *contracts.AuthenticatedRequest[*contracts.DeleteStarRequest]) error {
 	_, err := c.client.R().
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Delete(c.path("/api/genres/%d", req.Request.GenreID))
+		Delete(c.path("/api/stars/%d", req.Request.ID))
 
 	return err
 }
-*/

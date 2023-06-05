@@ -3,28 +3,41 @@ package stars
 import (
 	"net/http"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/config"
+	"github.com/AnatoliyRib1/movie-reviews/internal/pagination"
+
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"github.com/AnatoliyRib1/movie-reviews/internal/echox"
 	"github.com/labstack/echo/v4"
 )
 
 type Handler struct {
-	service *Service
+	service          *Service
+	paginationConfig config.PaginationConfig
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
-}
-
-/*
-	func (h *Handler) GetAll(c echo.Context) error {
-		genres, err := h.service.GetAll(c.Request().Context())
-		if err != nil {
-			return err
-		}
-		return c.JSON(http.StatusOK, genres)
+func NewHandler(service *Service, paginationConfig config.PaginationConfig) *Handler {
+	return &Handler{
+		service:          service,
+		paginationConfig: paginationConfig,
 	}
-*/
+}
+
+func (h *Handler) GetAll(c echo.Context) error {
+	req, err := echox.BindAndValidate[contracts.GetStarsRequest](c)
+	if err != nil {
+		return err
+	}
+	pagination.SetDefaults(&req.PaginatedRequest, h.paginationConfig)
+	offset, limit := pagination.OffsetLimit(&req.PaginatedRequest)
+
+	stars, total, err := h.service.GetAllPaginated(c.Request().Context(), offset, limit)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, pagination.Response(&req.PaginatedRequest, total, stars))
+}
+
 func (h *Handler) Get(c echo.Context) error {
 	req, err := echox.BindAndValidate[contracts.GetStarRequest](c)
 	if err != nil {
@@ -59,28 +72,35 @@ func (h *Handler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, star)
 }
 
-/*
 func (h *Handler) Delete(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.DeleteGenreRequest](c)
+	req, err := echox.BindAndValidate[contracts.DeleteStarRequest](c)
 	if err != nil {
 		return err
 	}
-	if err = h.service.Delete(c.Request().Context(), req.GenreID); err != nil {
+	if err = h.service.Delete(c.Request().Context(), req.ID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
 
 func (h *Handler) Update(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.UpdateGenreRequest](c)
+	req, err := echox.BindAndValidate[contracts.UpdateStarRequest](c)
 	if err != nil {
 		return err
 	}
+	star := &Star{
+		ID:         req.ID,
+		FirstName:  req.FirstName,
+		MiddleName: req.MiddleName,
+		LastName:   req.LastName,
+		BirthDate:  req.BirthDate,
+		BirthPlace: req.BirthPlace,
+		DeathDate:  req.DeathDate,
+		Bio:        req.Bio,
+	}
 
-	if err = h.service.Update(c.Request().Context(), req.GenreID, req.Name); err != nil {
+	if err = h.service.Update(c.Request().Context(), star); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusOK)
 }
-
-*/

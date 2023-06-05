@@ -50,29 +50,6 @@ func (r *Repository) GetAllPaginated(ctx context.Context, offset int, limit int)
 	return stars, total, err
 }
 
-/*
-	func (r *Repository) GetAll(ctx context.Context) ([]*Genre, error) {
-		rows, err := r.db.Query(ctx, `SELECT id, name FROM genres`)
-		if err != nil {
-			return nil, apperrors.Internal(err)
-		}
-		var genres []*Genre
-		defer rows.Close()
-
-		for rows.Next() {
-			var genre Genre
-			if err = rows.Scan(&genre.ID, &genre.Name); err != nil {
-				return nil, apperrors.Internal(err)
-			}
-			genres = append(genres, &genre)
-
-		}
-		if err = rows.Err(); err != nil {
-			return nil, apperrors.Internal(err)
-		}
-		return genres, err
-	}
-*/
 func (r *Repository) GetByID(ctx context.Context, id int) (*Star, error) {
 	var star Star
 	query := "SELECT id, first_name ,middle_name, last_name, birth_date,birth_place, death_date, bio, created_at FROM stars WHERE id = $1"

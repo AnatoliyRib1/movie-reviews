@@ -82,7 +82,7 @@ func starsAPIChecks(t *testing.T, c *client.Client) {
 			MiddleName: ptr("Walton"),
 			LastName:   "Lucas",
 			BirthDate:  time.Date(1944, time.May, 14, 0, 0, 0, 0, time.UTC),
-			BirthPlace: ptr("Modesto, California6 U.S."),
+			BirthPlace: ptr("Modesto, California U.S."),
 			Bio:        ptr("Famous creator of Star Wars and other films"),
 		}
 		err := c.UpdateStar(contracts.NewAuthenticated(req, johnDoeToken))

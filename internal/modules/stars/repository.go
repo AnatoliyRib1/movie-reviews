@@ -92,9 +92,9 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*Star, error) {
 
 func (r *Repository) Create(ctx context.Context, star *Star) error {
 	err := r.db.QueryRow(ctx,
-		"insert into stars (first_name ,middle_name, last_name, birth_date, birth_place, death_date, bio) values ($1, $2, $3, $4, $5, $6, $7) returning id, created_at, deleted_at",
+		"insert into stars (first_name ,middle_name, last_name, birth_date, birth_place, death_date, bio) values ($1, $2, $3, $4, $5, $6, $7) returning id, created_at",
 		star.FirstName, star.MiddleName, star.LastName, star.BirthDate, star.BirthPlace, star.DeathDate, star.Bio).
-		Scan(&star.ID, &star.CreatedAt, &star.DeletedAt)
+		Scan(&star.ID, &star.CreatedAt)
 	if err != nil {
 		return apperrors.Internal(err)
 	}

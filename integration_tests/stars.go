@@ -141,6 +141,5 @@ func getStar(t *testing.T, c *client.Client, id int) *contracts.Star {
 		require.Equal(t, http.StatusNotFound, cerr.Code)
 		return nil
 	}
-
 	return u
 }

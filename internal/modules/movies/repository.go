@@ -79,7 +79,7 @@ func (r *Repository) Create(ctx context.Context, movie *MovieDetails) error {
 }
 
 func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
-	n, err := r.db.Exec(ctx, "UPDATE movies SET version = version +1, title =$1, description = $2, release_date = $3 WHERE id = $4 AND version = $5 returning deleted_at", movie.Title, movie.Description, movie.ReleaseDate, movie.ID, movie.Version)
+	n, err := r.db.Exec(ctx, "UPDATE movies SET version = version +1, title =$1, description = $2, release_date = $3 WHERE id = $4 AND version = $5 ", movie.Title, movie.Description, movie.ReleaseDate, movie.ID, movie.Version)
 	if err != nil {
 		return apperrors.Internal(err)
 	}

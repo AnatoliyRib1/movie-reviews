@@ -12,6 +12,10 @@ services:
       - 5433:5432
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready --dbname ${DB_NAME} --username ${DB_USER}" ]
+      interval: 1s
+      timeout: 5s
 
   migrator:
     build: tern
@@ -22,7 +26,8 @@ services:
       - --migrations
       - /migrations
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 
   server:

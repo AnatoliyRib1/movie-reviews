@@ -2,8 +2,8 @@ package client
 
 import "github.com/AnatoliyRib1/movie-reviews/contracts"
 
-func (c *Client) GetMovie(movieID int) (*contracts.Movie, error) {
-	var m contracts.Movie
+func (c *Client) GetMovie(movieID int) (*contracts.MovieDetails, error) {
+	var m contracts.MovieDetails
 
 	_, err := c.client.R().
 		SetResult(&m).
@@ -23,8 +23,8 @@ func (c *Client) GetMovies(req *contracts.GetMoviesRequest) (*contracts.Paginate
 	return &res, err
 }
 
-func (c *Client) CreateMovie(req *contracts.AuthenticatedRequest[*contracts.CreateMovieRequest]) (*contracts.Movie, error) {
-	var g *contracts.Movie
+func (c *Client) CreateMovie(req *contracts.AuthenticatedRequest[*contracts.CreateMovieRequest]) (*contracts.MovieDetails, error) {
+	var g *contracts.MovieDetails
 	_, err := c.client.R().
 		SetAuthToken(req.AccessToken).
 		SetBody(req.Request).

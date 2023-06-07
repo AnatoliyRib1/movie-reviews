@@ -5,10 +5,15 @@ import "time"
 type Movie struct {
 	ID          int        `json:"id"`
 	Title       string     `json:"title" `
-	Description string     `json:"description"`
-	ReleaseDate string     `json:"release_date"`
+	ReleaseDate time.Time  `json:"release_date"`
 	CreatedAt   time.Time  `json:"created_at"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+}
+
+type MovieDetails struct {
+	Movie
+	Description string `json:"description"`
+	Version     int    `json:"version"`
 }
 type GetMovieRequest struct {
 	ID int `param:"movieId" validate:"nonzero"`
@@ -26,6 +31,7 @@ type CreateMovieRequest struct {
 
 type UpdateMovieRequest struct {
 	ID          int       `json:"id"`
+	Version     int       `json:"version" validate:"min=0"`
 	Title       string    `json:"title" validate:"nonzero"`
 	Description string    `json:"description" validate:"nonzero"`
 	ReleaseDate time.Time `json:"release_date" validate:"nonzero"`

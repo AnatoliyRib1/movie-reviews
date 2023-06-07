@@ -18,11 +18,11 @@ func (s *Service) GetAllPaginated(ctx context.Context, offset int, limit int) ([
 	return s.repo.GetAllPaginated(ctx, offset, limit)
 }
 
-func (s *Service) GetByID(ctx context.Context, movieID int) (movie *Movie, err error) {
+func (s *Service) GetByID(ctx context.Context, movieID int) (movie *MovieDetails, err error) {
 	return s.repo.GetByID(ctx, movieID)
 }
 
-func (s *Service) Create(ctx context.Context, movie *Movie) error {
+func (s *Service) Create(ctx context.Context, movie *MovieDetails) error {
 	if err := s.repo.Create(ctx, movie); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (s *Service) Create(ctx context.Context, movie *Movie) error {
 	return nil
 }
 
-func (s *Service) Update(ctx context.Context, movie *Movie) error {
+func (s *Service) Update(ctx context.Context, movie *MovieDetails) error {
 	if err := s.repo.Update(ctx, movie); err != nil {
 		return err
 	}
@@ -42,6 +42,6 @@ func (s *Service) Delete(ctx context.Context, movieID int) error {
 	if err := s.repo.Delete(ctx, movieID); err != nil {
 		return err
 	}
-	log.FromContext(ctx).Info("movie deleted", "movieId", movieID)
+	log.FromContext(ctx).Info("movie deleted", "movieID", movieID)
 	return nil
 }

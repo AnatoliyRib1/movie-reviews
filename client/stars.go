@@ -2,8 +2,8 @@ package client
 
 import "github.com/AnatoliyRib1/movie-reviews/contracts"
 
-func (c *Client) GetStar(starID int) (*contracts.Star, error) {
-	var g contracts.Star
+func (c *Client) GetStar(starID int) (*contracts.StarDetails, error) {
+	var g contracts.StarDetails
 
 	_, err := c.client.R().
 		SetResult(&g).
@@ -23,8 +23,8 @@ func (c *Client) GetStars(req *contracts.GetStarsRequest) (*contracts.PaginatedR
 	return &res, err
 }
 
-func (c *Client) CreateStar(req *contracts.AuthenticatedRequest[*contracts.CreateStarRequest]) (*contracts.Star, error) {
-	var g *contracts.Star
+func (c *Client) CreateStar(req *contracts.AuthenticatedRequest[*contracts.CreateStarRequest]) (*contracts.StarDetails, error) {
+	var g *contracts.StarDetails
 	_, err := c.client.R().
 		SetAuthToken(req.AccessToken).
 		SetBody(req.Request).

@@ -54,10 +54,12 @@ func (h *Handler) Create(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	movie := &Movie{
-		Title:       req.Title,
+	movie := &MovieDetails{
+		Movie: Movie{
+			Title:       req.Title,
+			ReleaseDate: req.ReleaseDate,
+		},
 		Description: req.Description,
-		ReleaseDate: req.ReleaseDate,
 	}
 	err = h.service.Create(c.Request().Context(), movie)
 	if err != nil {
@@ -83,11 +85,13 @@ func (h *Handler) Update(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	movie := &Movie{
-		ID:          req.ID,
-		Title:       req.Title,
+	movie := &MovieDetails{
+		Movie: Movie{
+			ID:          req.ID,
+			Title:       req.Title,
+			ReleaseDate: req.ReleaseDate,
+		},
 		Description: req.Description,
-		ReleaseDate: req.ReleaseDate,
 	}
 
 	if err = h.service.Update(c.Request().Context(), movie); err != nil {

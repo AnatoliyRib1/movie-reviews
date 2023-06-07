@@ -11,11 +11,11 @@ import (
 )
 
 func moviesAPIChecks(t *testing.T, c *client.Client) {
-	var starWars, harryPotter, lordOfTheRing *contracts.Movie
+	var starWars, harryPotter, lordOfTheRing *contracts.MovieDetails
 	t.Run("movies.CreateMovie: success", func(t *testing.T) {
 		cases := []struct {
 			req  *contracts.CreateMovieRequest
-			addr **contracts.Movie
+			addr **contracts.MovieDetails
 		}{
 			{
 				req: &contracts.CreateMovieRequest{
@@ -58,7 +58,7 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 	})
 
 	t.Run("movies.GetMovie: success", func(t *testing.T) {
-		for _, movie := range []*contracts.Movie{starWars, harryPotter, lordOfTheRing} {
+		for _, movie := range []*contracts.MovieDetails{starWars, harryPotter, lordOfTheRing} {
 			s, err := c.GetMovie(movie.ID)
 			require.NoError(t, err)
 			require.Equal(t, movie, s)
@@ -106,16 +106,16 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 		require.Equal(t, 3, res.Total)
 		require.Equal(t, 1, res.Page)
 		require.Equal(t, testPaginationSize, res.Size)
-		require.Equal(t, []*contracts.Movie{starWars, harryPotter}, res.Items)
+		require.Equal(t, []*contracts.Movie{&starWars.Movie, &harryPotter.Movie}, res.Items)
 
-		req.Page = 2
+		req.Page = res.Page + 1
 		res, err = c.GetMovies(req)
 		require.NoError(t, err)
 
 		require.Equal(t, 3, res.Total)
 		require.Equal(t, 2, res.Page)
 		require.Equal(t, testPaginationSize, res.Size)
-		require.Equal(t, []*contracts.Movie{lordOfTheRing}, res.Items)
+		require.Equal(t, []*contracts.Movie{&lordOfTheRing.Movie}, res.Items)
 	})
 
 	t.Run("movies.DeleteMovie: success", func(t *testing.T) {
@@ -130,7 +130,7 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 	})
 }
 
-func getMovie(t *testing.T, c *client.Client, id int) *contracts.Movie {
+func getMovie(t *testing.T, c *client.Client, id int) *contracts.MovieDetails {
 	m, err := c.GetMovie(id)
 	if err != nil {
 		cerr, ok := err.(*client.Error)

@@ -11,11 +11,11 @@ import (
 )
 
 func starsAPIChecks(t *testing.T, c *client.Client) {
-	var lucas, hamill, mcgregor *contracts.Star
+	var lucas, hamill, mcgregor *contracts.StarDetails
 	t.Run("stars.CreateStar: success", func(t *testing.T) {
 		cases := []struct {
 			req  *contracts.CreateStarRequest
-			addr **contracts.Star
+			addr **contracts.StarDetails
 		}{
 			{
 				req: &contracts.CreateStarRequest{
@@ -62,7 +62,7 @@ func starsAPIChecks(t *testing.T, c *client.Client) {
 	})
 
 	t.Run("stars.GetStar: success", func(t *testing.T) {
-		for _, star := range []*contracts.Star{lucas, hamill, mcgregor} {
+		for _, star := range []*contracts.StarDetails{lucas, hamill, mcgregor} {
 			s, err := c.GetStar(star.ID)
 			require.NoError(t, err)
 			require.Equal(t, star, s)
@@ -109,16 +109,16 @@ func starsAPIChecks(t *testing.T, c *client.Client) {
 		require.Equal(t, 3, res.Total)
 		require.Equal(t, 1, res.Page)
 		require.Equal(t, testPaginationSize, res.Size)
-		require.Equal(t, []*contracts.Star{lucas, hamill}, res.Items)
+		require.Equal(t, []*contracts.Star{&lucas.Star, &hamill.Star}, res.Items)
 
-		req.Page = 2
+		req.Page = res.Page + 1
 		res, err = c.GetStars(req)
 		require.NoError(t, err)
 
 		require.Equal(t, 3, res.Total)
 		require.Equal(t, 2, res.Page)
 		require.Equal(t, testPaginationSize, res.Size)
-		require.Equal(t, []*contracts.Star{mcgregor}, res.Items)
+		require.Equal(t, []*contracts.Star{&mcgregor.Star}, res.Items)
 	})
 
 	t.Run("stars.DeleteStar: success", func(t *testing.T) {
@@ -133,7 +133,7 @@ func starsAPIChecks(t *testing.T, c *client.Client) {
 	})
 }
 
-func getStar(t *testing.T, c *client.Client, id int) *contracts.Star {
+func getStar(t *testing.T, c *client.Client, id int) *contracts.StarDetails {
 	u, err := c.GetStar(id)
 	if err != nil {
 		cerr, ok := err.(*client.Error)

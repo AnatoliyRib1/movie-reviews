@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/movies"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
@@ -58,6 +60,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	authModule := auth.NewModule(jwtService, usersModule.Service)
 	genresModule := genres.NewModule(db)
 	starsModule := stars.NewModule(db, cfg.Pagination)
+	moviesModule := movies.NewModule(db, cfg.Pagination)
 
 	if err = createInitialAdminUser(cfg.Admin, authModule.Service); err != nil {
 		return nil, withClosers(closers, fmt.Errorf("create initial admin user: %w", err))
@@ -98,6 +101,13 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	api.POST("/stars", starsModule.Handler.Create, auth.Editor)
 	api.PUT("/stars/:starId", starsModule.Handler.Update, auth.Editor)
 	api.DELETE("/stars/:starId", starsModule.Handler.Delete, auth.Editor)
+
+	// Movies API routes
+	api.GET("/movies", moviesModule.Handler.GetAll)
+	api.GET("/movies/:movieId", moviesModule.Handler.Get)
+	api.POST("/movies", moviesModule.Handler.Create, auth.Editor)
+	api.PUT("/movies/:movieId", moviesModule.Handler.Update, auth.Editor)
+	api.DELETE("/movies/:movieId", moviesModule.Handler.Delete, auth.Editor)
 
 	return &Server{e: e, cfg: cfg, closers: closers}, nil
 }

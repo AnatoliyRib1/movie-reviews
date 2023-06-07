@@ -18,11 +18,11 @@ func (s *Service) GetAllPaginated(ctx context.Context, offset int, limit int) ([
 	return s.repo.GetAllPaginated(ctx, offset, limit)
 }
 
-func (s *Service) GetByID(ctx context.Context, starID int) (star *Star, err error) {
+func (s *Service) GetByID(ctx context.Context, starID int) (star *StarDetails, err error) {
 	return s.repo.GetByID(ctx, starID)
 }
 
-func (s *Service) Create(ctx context.Context, star *Star) error {
+func (s *Service) Create(ctx context.Context, star *StarDetails) error {
 	if err := s.repo.Create(ctx, star); err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (s *Service) Create(ctx context.Context, star *Star) error {
 	return nil
 }
 
-func (s *Service) Update(ctx context.Context, star *Star) error {
+func (s *Service) Update(ctx context.Context, star *StarDetails) error {
 	if err := s.repo.Update(ctx, star); err != nil {
 		return err
 	}

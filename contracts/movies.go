@@ -12,8 +12,9 @@ type Movie struct {
 
 type MovieDetails struct {
 	Movie
-	Description string `json:"description"`
-	Version     int    `json:"version"`
+	Description string   `json:"description"`
+	Version     int      `json:"version"`
+	Genres      []*Genre `json:"genres"`
 }
 type GetMovieRequest struct {
 	ID int `param:"movieId" validate:"nonzero"`
@@ -27,6 +28,7 @@ type CreateMovieRequest struct {
 	Title       string    `json:"title" validate:"nonzero"`
 	Description string    `json:"description" validate:"nonzero"`
 	ReleaseDate time.Time `json:"release_date" validate:"nonzero"`
+	GenreIDs    []int     `json:"genre_ids"`
 }
 
 type UpdateMovieRequest struct {
@@ -35,6 +37,7 @@ type UpdateMovieRequest struct {
 	Title       string    `json:"title" validate:"nonzero"`
 	Description string    `json:"description" validate:"nonzero"`
 	ReleaseDate time.Time `json:"release_date" validate:"nonzero"`
+	GenreIDs    []int     `json:"genre_ids"`
 }
 type DeleteMovieRequest struct {
 	ID int `param:"movieId" validate:"nonzero"`

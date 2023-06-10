@@ -48,7 +48,7 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*Genre, error) {
 func (r *Repository) GetByMovieID(ctx context.Context, movieID int) ([]*Genre, error) {
 	rows, err := r.db.Query(ctx, `
 		select g.id, g.name from genres g
-	inner join movie_genres mg on mg.genre_id = g.id
+		inner join movie_genres mg on mg.genre_id = g.id
 		where mg.movie_id = $1
 		order by mg.order_no
 		`, movieID)

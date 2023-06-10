@@ -132,7 +132,7 @@ func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
 		return r.updateGenres(ctx, currentGenres, nextGenres)
 	})
 	if err != nil {
-		return apperrors.Internal(err)
+		return apperrors.EnsureInternal(err)
 	}
 	return nil
 }

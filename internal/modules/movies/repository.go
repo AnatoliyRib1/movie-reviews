@@ -165,9 +165,9 @@ func (r *Repository) updateGenres(ctx context.Context, current, next []*genres.M
 			ctx,
 			"delete from movie_genres where movie_id = $1 and genre_id = $2",
 			mgo.MovieID, mgo.GenreID)
-		return apperrors.EnsureInternal(err)
+		return err
 	}
-	return apperrors.EnsureInternal(dbx.AdjustRelations(current, next, addFunc, removeFn))
+	return dbx.AdjustRelations(current, next, addFunc, removeFn)
 }
 
 func errMovieWithIDNotFound(movieID int) error {

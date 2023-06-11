@@ -25,19 +25,19 @@ func FromContext(ctx context.Context, def Queryable) Queryable {
 func InTransaction(ctx context.Context, db *pgxpool.Pool, fn func(ctx context.Context, tx pgx.Tx) error) error {
 	tx, err := db.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("begin transaction:  %v", err)
+		return fmt.Errorf("begin transaction:  %w", err)
 	}
 
 	ctx = WithTransaction(ctx, tx)
 	defer func() {
 		if err != nil {
 			if txErr := tx.Rollback(ctx); txErr != nil {
-				err = errors.Join(err, fmt.Errorf("rollback transaction: %v", err))
+				err = errors.Join(err, fmt.Errorf("rollback transaction: %w", err))
 			}
 		} else {
 			cerr := tx.Commit(ctx)
 			if cerr != nil {
-				err = fmt.Errorf("commit transaction:  %v", err)
+				err = fmt.Errorf("commit transaction:  %w", err)
 			}
 		}
 	}()

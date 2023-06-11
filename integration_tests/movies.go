@@ -87,12 +87,17 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 				" from a screenplay by Steve Kloves, based on the 1997 novel of the same name by J. K. Rowling." +
 				" It is the first installment in the Harry Potter film series. ",
 			ReleaseDate: time.Date(2001, time.November, 4, 0, 0, 0, 0, time.UTC),
+			GenreIDs:    []int{Drama.ID, Action.ID},
 		}
 		err := c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
 		require.NoError(t, err)
 
+		err = c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
+		requireVersionMismatchError(t, err, "movie", "id", req.ID, req.Version)
+
 		harryPotter = getMovie(t, c, harryPotter.ID)
 		require.Equal(t, req.Title, harryPotter.Title)
+		require.Equal(t, []*contracts.Genre{Drama, Action}, harryPotter.Genres)
 	})
 
 	t.Run("movies.UpdateMovie: not found", func(t *testing.T) {

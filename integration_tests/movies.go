@@ -22,6 +22,7 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 					Title:       "Star Wars",
 					Description: "Star Wars is an American epic space opera",
 					ReleaseDate: time.Date(1977, time.May, 25, 0, 0, 0, 0, time.UTC),
+					GenreIDs:    []int{Adventure.ID, Drama.ID},
 				},
 				addr: &starWars,
 			},
@@ -32,6 +33,7 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 						" from a screenplay by Steve Kloves, based on the 1997 novel of the same name by J. K. Rowling." +
 						" It is the first installment in the Harry Potter film series. ",
 					ReleaseDate: time.Date(2001, time.November, 4, 0, 0, 0, 0, time.UTC),
+					GenreIDs:    []int{Adventure.ID},
 				},
 				addr: &harryPotter,
 			},
@@ -41,6 +43,7 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 					Description: "The Lord of the Rings is a series of three epic fantasy adventure films directed by Peter Jackson," +
 						" based on the novel The Lord of the Rings by J. R. R. Tolkien",
 					ReleaseDate: time.Date(2001, time.December, 10, 0, 0, 0, 0, time.UTC),
+					GenreIDs:    []int{Action.ID, Adventure.ID},
 				},
 				addr: &lordOfTheRing,
 			},
@@ -53,7 +56,12 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 
 			*cc.addr = movie
 			require.NotEmpty(t, movie.ID)
-			require.NotEmpty(t, movie.CreatedAt)
+			require.Len(t, movie.Genres, len(cc.req.GenreIDs))
+			for i, genreID := range cc.req.GenreIDs {
+				require.Equal(t, genreID, movie.Genres[i].ID)
+				require.NotNil(t, movie.Genres[i].Name)
+
+			}
 		}
 	})
 
@@ -79,12 +87,17 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 				" from a screenplay by Steve Kloves, based on the 1997 novel of the same name by J. K. Rowling." +
 				" It is the first installment in the Harry Potter film series. ",
 			ReleaseDate: time.Date(2001, time.November, 4, 0, 0, 0, 0, time.UTC),
+			GenreIDs:    []int{Drama.ID, Action.ID},
 		}
 		err := c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
 		require.NoError(t, err)
 
+		err = c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
+		requireVersionMismatchError(t, err, "movie", "id", req.ID, req.Version)
+
 		harryPotter = getMovie(t, c, harryPotter.ID)
 		require.Equal(t, req.Title, harryPotter.Title)
+		require.Equal(t, []*contracts.Genre{Drama, Action}, harryPotter.Genres)
 	})
 
 	t.Run("movies.UpdateMovie: not found", func(t *testing.T) {

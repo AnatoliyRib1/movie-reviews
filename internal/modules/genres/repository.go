@@ -3,6 +3,8 @@ package genres
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/dbx"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,21 +23,9 @@ func (r *Repository) GetAll(ctx context.Context) ([]*Genre, error) {
 	if err != nil {
 		return nil, apperrors.Internal(err)
 	}
-	var genres []*Genre
+
 	defer rows.Close()
-
-	for rows.Next() {
-		var genre Genre
-		if err = rows.Scan(&genre.ID, &genre.Name); err != nil {
-			return nil, apperrors.Internal(err)
-		}
-		genres = append(genres, &genre)
-
-	}
-	if err = rows.Err(); err != nil {
-		return nil, apperrors.Internal(err)
-	}
-	return genres, err
+	return scanGenres(rows)
 }
 
 func (r *Repository) GetByID(ctx context.Context, id int) (*Genre, error) {
@@ -53,6 +43,55 @@ func (r *Repository) GetByID(ctx context.Context, id int) (*Genre, error) {
 	}
 
 	return &genre, nil
+}
+
+func (r *Repository) GetByMovieID(ctx context.Context, movieID int) ([]*Genre, error) {
+	rows, err := r.db.Query(ctx, `
+		select g.id, g.name from genres g
+		inner join movie_genres mg on mg.genre_id = g.id
+		where mg.movie_id = $1
+		order by mg.order_no
+		`, movieID)
+	if err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	defer rows.Close()
+	return scanGenres(rows)
+}
+
+func (r *Repository) GetRelationByMovieID(ctx context.Context, movieID int) ([]*MovieGenreRelation, error) {
+	rows, err := dbx.FromContext(ctx, r.db).
+		Query(ctx, "select movie_id, genre_id, order_no from movie_genres where movie_id = $1 order by order_no", movieID)
+	if err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	defer rows.Close()
+
+	var relations []*MovieGenreRelation
+
+	for rows.Next() {
+		var relation MovieGenreRelation
+		if err = rows.Scan(&relation.MovieID, &relation.GenreID, &relation.OrderNo); err != nil {
+			return nil, apperrors.Internal(err)
+		}
+		relations = append(relations, &relation)
+	}
+	return relations, nil
+}
+
+func scanGenres(rows pgx.Rows) ([]*Genre, error) {
+	var genres []*Genre
+	for rows.Next() {
+		var genre Genre
+		if err := rows.Scan(&genre.ID, &genre.Name); err != nil {
+			return nil, apperrors.Internal(err)
+		}
+		genres = append(genres, &genre)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	return genres, nil
 }
 
 func (r *Repository) Create(ctx context.Context, genre *Genre) error {

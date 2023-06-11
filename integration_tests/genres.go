@@ -9,6 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	Action    *contracts.Genre
+	Adventure *contracts.Genre
+	SciFi     *contracts.Genre
+	Drama     *contracts.Genre
+)
+
 func genresAPIChecks(t *testing.T, c *client.Client) {
 	t.Run("genres.GetGenres: empty", func(t *testing.T) {
 		genres, err := c.GetGenres()
@@ -16,16 +23,17 @@ func genresAPIChecks(t *testing.T, c *client.Client) {
 		require.Empty(t, genres)
 	})
 
-	var action, drama, spooky *contracts.Genre
-	t.Run("genres.CreateGenre: success: Action by Admin, Drama and Spooky by John Doe", func(t *testing.T) {
+	var spooky *contracts.Genre
+	t.Run("genres.CreateGenre: success: Action by Admin, Drama, Adventure and Spooky by John Doe", func(t *testing.T) {
 		cases := []struct {
 			name  string
 			token string
 			addr  **contracts.Genre
 		}{
-			{"Action", adminToken, &action},
-			{"Drama", johnDoeToken, &drama},
+			{"Action", adminToken, &Action},
+			{"Drama", johnDoeToken, &Drama},
 			{"Spooky", johnDoeToken, &spooky},
+			{"Adventure", johnDoeToken, &Adventure},
 		}
 
 		for _, cc := range cases {
@@ -51,16 +59,16 @@ func genresAPIChecks(t *testing.T, c *client.Client) {
 
 	t.Run("genres.CreateGenre: existing name", func(t *testing.T) {
 		req := &contracts.CreateGenreRequest{
-			Name: action.Name,
+			Name: Action.Name,
 		}
 		_, err := c.CreateGenre(contracts.NewAuthenticated(req, johnDoeToken))
-		requireAlreadyExistsError(t, err, "genre", "name", action.Name)
+		requireAlreadyExistsError(t, err, "genre", "name", Action.Name)
 	})
 
-	t.Run("genres.GetGenres: three genres", func(t *testing.T) {
+	t.Run("genres.GetGenres: four genres", func(t *testing.T) {
 		genres, err := c.GetGenres()
 		require.NoError(t, err)
-		require.Equal(t, []*contracts.Genre{action, drama, spooky}, genres)
+		require.Equal(t, []*contracts.Genre{Action, Drama, spooky, Adventure}, genres)
 	})
 
 	t.Run("genres.GetGenre: success", func(t *testing.T) {
@@ -109,10 +117,10 @@ func genresAPIChecks(t *testing.T, c *client.Client) {
 		require.Nil(t, spooky)
 	})
 
-	t.Run("genres.GetGenres: two genres", func(t *testing.T) {
+	t.Run("genres.GetGenres: three genres", func(t *testing.T) {
 		genres, err := c.GetGenres()
 		require.NoError(t, err)
-		require.Equal(t, []*contracts.Genre{action, drama}, genres)
+		require.Equal(t, []*contracts.Genre{Action, Drama, Adventure}, genres)
 	})
 }
 

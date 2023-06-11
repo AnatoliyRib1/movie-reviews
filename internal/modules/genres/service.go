@@ -46,3 +46,7 @@ func (s *Service) Delete(ctx context.Context, genreID int) error {
 	log.FromContext(ctx).Info("genre deleted", "genreId", genreID)
 	return nil
 }
+
+func (s *Service) GetByMovieID(ctx context.Context, movieID int) ([]*Genre, error) {
+	return s.repo.GetByMovieID(ctx, movieID)
+}

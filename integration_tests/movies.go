@@ -182,21 +182,19 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 		require.Equal(t, testPaginationSize, res.Size)
 		require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
 	})
-	/*
-		t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
-			req := &contracts.GetMoviesRequest{
-				SearchTerm: ptr("Force"),
-			}
-			res, err := c.GetMovies(req)
-			require.NoError(t, err)
 
-			require.Equal(t, 1, res.Total)
-			require.Equal(t, 1, res.Page)
-			require.Equal(t, testPaginationSize, res.Size)
-			require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
-		})
+	t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
+		req := &contracts.GetMoviesRequest{
+			SearchTerm: ptr("Force"),
+		}
+		res, err := c.GetMovies(req)
+		require.NoError(t, err)
 
-	*/
+		require.Equal(t, 1, res.Total)
+		require.Equal(t, 1, res.Page)
+		require.Equal(t, testPaginationSize, res.Size)
+		require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
+	})
 }
 
 func createRandomMovie(t *testing.T, c *client.Client) *contracts.MovieDetails {

@@ -29,14 +29,13 @@ func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository, starRepo *sta
 	}
 }
 
-func (r *Repository) GetAllPaginated(ctx context.Context, starID *int, offset int, limit int) ([]*Movie, int, error) {
+func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, starID *int, offset int, limit int) ([]*Movie, int, error) {
 	b := &pgx.Batch{}
 
 	selectQuery := dbx.StatementBuilder.
 		Select("id, title,  release_date, created_at").
 		From("movies").
 		Where("deleted_at IS NULL").
-		OrderBy("id").
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 
@@ -53,6 +52,16 @@ func (r *Repository) GetAllPaginated(ctx context.Context, starID *int, offset in
 		countQuery = countQuery.
 			Join("movie_stars on movies.id = movie_stars.movie_id").
 			Where("movie_stars.star_id = ?", starID)
+	}
+
+	if searchTerm != nil {
+		selectQuery = selectQuery.
+			Where("search_vector @@ to_tsquery('english', ?)", *searchTerm).
+			OrderByClause("ts_rank_cd(search_vector, to_tsquery('english', ?)) DESC", *searchTerm)
+
+		countQuery = countQuery.
+			Where("search_vector @@ to_tsquery('english', ?)", *searchTerm)
+
 	}
 	if err := dbx.QueueBatchSelect(b, selectQuery); err != nil {
 		return nil, 0, apperrors.Internal(err)

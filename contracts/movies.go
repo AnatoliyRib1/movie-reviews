@@ -39,14 +39,17 @@ type GetMovieRequest struct {
 
 type GetMoviesRequest struct {
 	PaginatedRequest
-	StarID     *int `query:"starId"`
-	SearchTerm *string
+	StarID     *int    `query:"starId"`
+	SearchTerm *string `query:"q"`
 }
 
 func (r *GetMoviesRequest) ToQueryParams() map[string]string {
 	param := r.PaginatedRequest.ToQueryParams()
 	if r.StarID != nil {
 		param["starId"] = strconv.Itoa(*r.StarID)
+	}
+	if r.SearchTerm != nil {
+		param["q"] = *r.SearchTerm
 	}
 	return param
 }

@@ -14,6 +14,7 @@ require (
 	github.com/jackc/tern/v2 v2.1.0
 	github.com/labstack/echo-jwt/v4 v4.1.0
 	github.com/labstack/echo/v4 v4.9.1
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0
 	github.com/stretchr/testify v1.8.2
 	github.com/testcontainers/testcontainers-go v0.20.1
 	golang.org/x/crypto v0.9.0
@@ -45,7 +46,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.0 // indirect
 	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
-	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

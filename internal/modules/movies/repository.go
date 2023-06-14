@@ -222,8 +222,8 @@ func (r *Repository) updateCast(ctx context.Context, current, next []*stars.Movi
 	removeFn := func(mgo *stars.MovieStarRelation) error {
 		_, err := q.Exec(
 			ctx,
-			"delete from movie_stars where movie_id = $1 and star_id = $2 and role = $3 and details = $4",
-			mgo.MovieID, mgo.StarID, mgo.Role, mgo.Details)
+			"delete from movie_stars where movie_id = $1 and star_id = $2 and role = $3 ",
+			mgo.MovieID, mgo.StarID, mgo.Role)
 		return err
 	}
 	return dbx.AdjustRelations(current, next, addFunc, removeFn)

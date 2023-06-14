@@ -131,8 +131,8 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 		require.NoError(t, err)
 
 		// Concurrent update should fail
-		//	err = c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
-		//	requireVersionMismatchError(t, err, "movie", "id", req.MovieID, req.Version)
+		err = c.UpdateMovie(contracts.NewAuthenticated(req, johnDoeToken))
+		requireVersionMismatchError(t, err, "movie", "id", req.MovieID, req.Version)
 
 		StarWars = getMovie(t, c, StarWars.ID)
 		require.Equal(t, req.Description, StarWars.Description)
@@ -169,23 +169,10 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 		require.Equal(t, testPaginationSize, res.Size)
 		require.Equal(t, []*contracts.Star{&GeorgeLucas.Star, &MarkHamill.Star}, res.Items)
 	})
-
-	t.Run("movies.GetMovies: of George Lucas", func(t *testing.T) {
-		req := &contracts.GetMoviesRequest{
-			ID: ptr(GeorgeLucas.ID),
-		}
-		res, err := c.GetMovies(req)
-		require.NoError(t, err)
-
-		require.Equal(t, 1, res.Total)
-		require.Equal(t, 1, res.Page)
-		require.Equal(t, testPaginationSize, res.Size)
-		require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
-	})
 	/*
-		t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
+		t.Run("movies.GetMovies: of George Lucas", func(t *testing.T) {
 			req := &contracts.GetMoviesRequest{
-				SearchTerm: ptr("Force"),
+				StarID: ptr(GeorgeLucas.ID),
 			}
 			res, err := c.GetMovies(req)
 			require.NoError(t, err)
@@ -195,6 +182,19 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 			require.Equal(t, testPaginationSize, res.Size)
 			require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
 		})
+
+			t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
+				req := &contracts.GetMoviesRequest{
+					SearchTerm: ptr("Force"),
+				}
+				res, err := c.GetMovies(req)
+				require.NoError(t, err)
+
+				require.Equal(t, 1, res.Total)
+				require.Equal(t, 1, res.Page)
+				require.Equal(t, testPaginationSize, res.Size)
+				require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
+			})
 
 	*/
 }

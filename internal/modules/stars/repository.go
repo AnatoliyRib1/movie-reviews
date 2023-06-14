@@ -170,7 +170,6 @@ func (r *Repository) GetRelationByMovieID(ctx context.Context, movieID int) ([]*
 		relations = append(relations, &relation)
 	}
 	return relations, nil
-
 }
 
 func scanStars(rows pgx.Rows) ([]*MovieCredit, error) {

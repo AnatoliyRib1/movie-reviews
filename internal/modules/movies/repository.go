@@ -150,6 +150,11 @@ func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
 			return err
 		}
 
+		currentCast, err := r.starRepo.GetRelationByMovieID(ctx, movie.ID)
+		if err != nil {
+			return err
+		}
+
 		nextCast := slices.MapIndex(movie.Cast, func(i int, c *stars.MovieCredit) *stars.MovieStarRelation {
 			return &stars.MovieStarRelation{
 				MovieID: movie.ID,
@@ -159,7 +164,7 @@ func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
 				OrderNo: i,
 			}
 		})
-		if err = r.updateCast(ctx, nil, nextCast); err != nil {
+		if err = r.updateCast(ctx, currentCast, nextCast); err != nil {
 			return err
 		}
 		return err

@@ -152,6 +152,27 @@ func (r *Repository) GetByMovieID(ctx context.Context, movieID int) ([]*MovieCre
 	return scanStars(rows)
 }
 
+func (r *Repository) GetRelationByMovieID(ctx context.Context, movieID int) ([]*MovieStarRelation, error) {
+	rows, err := dbx.FromContext(ctx, r.db).
+		Query(ctx, "select movie_id ,  star_id ,role ,details ,order_no from movie_stars where movie_id = $1 order by order_no", movieID)
+	if err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	defer rows.Close()
+
+	var relations []*MovieStarRelation
+
+	for rows.Next() {
+		var relation MovieStarRelation
+		if err = rows.Scan(&relation.MovieID, &relation.StarID, &relation.Role, &relation.Details, &relation.OrderNo); err != nil {
+			return nil, apperrors.Internal(err)
+		}
+		relations = append(relations, &relation)
+	}
+	return relations, nil
+
+}
+
 func scanStars(rows pgx.Rows) ([]*MovieCredit, error) {
 	var stars []*MovieCredit
 	for rows.Next() {

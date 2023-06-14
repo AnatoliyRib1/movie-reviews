@@ -4,8 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/Masterminds/squirrel"
-
 	"github.com/jackc/pgx/v5"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -24,7 +22,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 func (r *Repository) GetAllPaginated(ctx context.Context, movieID *int, offset int, limit int) ([]*Star, int, error) {
 	b := &pgx.Batch{}
 
-	selectQuery := squirrel.
+	selectQuery := dbx.StatementBuilder.
 		Select("id, first_name, last_name, birth_date, death_date, created_at, deleted_at").
 		From("stars").
 		Where("deleted_at IS NULL").
@@ -32,7 +30,7 @@ func (r *Repository) GetAllPaginated(ctx context.Context, movieID *int, offset i
 		Limit(uint64(limit)).
 		Offset(uint64(offset))
 
-	countQuery := squirrel.
+	countQuery := dbx.StatementBuilder.
 		Select("count(*)").
 		From("stars").
 		Where("deleted_at IS NULL")
@@ -40,24 +38,20 @@ func (r *Repository) GetAllPaginated(ctx context.Context, movieID *int, offset i
 	if movieID != nil {
 		selectQuery = selectQuery.
 			Join("movie_stars on stars.id = movie_stars.star_id").
-			Where("movie_stars.movie_id = $1", movieID)
+			Where("movie_stars.movie_id = ?", movieID)
 
 		countQuery = countQuery.
 			Join("movie_stars on stars.id = movie_stars.star_id").
-			Where("movie_stars.movie_id = $1", movieID)
+			Where("movie_stars.movie_id = ?", movieID)
 	}
 
-	sql, args, err := selectQuery.ToSql()
-	if err != nil {
+	if err := dbx.QueueBatchSelect(b, selectQuery); err != nil {
 		return nil, 0, apperrors.Internal(err)
 	}
-	b.Queue(sql, args...)
 
-	sql, args, err = countQuery.ToSql()
-	if err != nil {
+	if err := dbx.QueueBatchSelect(b, countQuery); err != nil {
 		return nil, 0, apperrors.Internal(err)
 	}
-	b.Queue(sql, args...)
 
 	br := r.db.SendBatch(ctx, b)
 	defer br.Close()

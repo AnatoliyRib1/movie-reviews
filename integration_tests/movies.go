@@ -169,10 +169,23 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 		require.Equal(t, testPaginationSize, res.Size)
 		require.Equal(t, []*contracts.Star{&GeorgeLucas.Star, &MarkHamill.Star}, res.Items)
 	})
+
+	t.Run("movies.GetMovies: of George Lucas", func(t *testing.T) {
+		req := &contracts.GetMoviesRequest{
+			StarID: ptr(GeorgeLucas.ID),
+		}
+		res, err := c.GetMovies(req)
+		require.NoError(t, err)
+
+		require.Equal(t, 1, res.Total)
+		require.Equal(t, 1, res.Page)
+		require.Equal(t, testPaginationSize, res.Size)
+		require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
+	})
 	/*
-		t.Run("movies.GetMovies: of George Lucas", func(t *testing.T) {
+		t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
 			req := &contracts.GetMoviesRequest{
-				StarID: ptr(GeorgeLucas.ID),
+				SearchTerm: ptr("Force"),
 			}
 			res, err := c.GetMovies(req)
 			require.NoError(t, err)
@@ -182,19 +195,6 @@ func moviesAPIChecks(t *testing.T, c *client.Client) {
 			require.Equal(t, testPaginationSize, res.Size)
 			require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
 		})
-
-			t.Run("movies.GetMovies: about Jedi", func(t *testing.T) {
-				req := &contracts.GetMoviesRequest{
-					SearchTerm: ptr("Force"),
-				}
-				res, err := c.GetMovies(req)
-				require.NoError(t, err)
-
-				require.Equal(t, 1, res.Total)
-				require.Equal(t, 1, res.Page)
-				require.Equal(t, testPaginationSize, res.Size)
-				require.Equal(t, []*contracts.Movie{&StarWars.Movie}, res.Items)
-			})
 
 	*/
 }

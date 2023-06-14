@@ -29,10 +29,39 @@ func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository, starRepo *sta
 	}
 }
 
-func (r *Repository) GetAllPaginated(ctx context.Context, offset int, limit int) ([]*Movie, int, error) {
+func (r *Repository) GetAllPaginated(ctx context.Context, starID *int, offset int, limit int) ([]*Movie, int, error) {
 	b := &pgx.Batch{}
-	b.Queue("SELECT id, title,  release_date, created_at FROM movies WHERE deleted_at IS NULL ORDER BY id LIMIT $1 OFFSET $2", limit, offset)
-	b.Queue("SELECT count(*) FROM movies WHERE deleted_at IS NULL")
+
+	selectQuery := dbx.StatementBuilder.
+		Select("id, title,  release_date, created_at").
+		From("movies").
+		Where("deleted_at IS NULL").
+		OrderBy("id").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	countQuery := dbx.StatementBuilder.
+		Select("count(*)").
+		From("movies").
+		Where("deleted_at IS NULL")
+
+	if starID != nil {
+		selectQuery = selectQuery.
+			Join("movie_stars on movies.id = movie_stars.movie_id").
+			Where("movie_stars.star_id = ?", starID)
+
+		countQuery = countQuery.
+			Join("movie_stars on movies.id = movie_stars.movie_id").
+			Where("movie_stars.star_id = ?", starID)
+	}
+	if err := dbx.QueueBatchSelect(b, selectQuery); err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+
+	if err := dbx.QueueBatchSelect(b, countQuery); err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+
 	br := r.db.SendBatch(ctx, b)
 	defer br.Close()
 

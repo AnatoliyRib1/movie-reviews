@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
 	"github.com/AnatoliyRib1/movie-reviews/internal/slices"
 
@@ -16,19 +18,50 @@ import (
 type Repository struct {
 	db        *pgxpool.Pool
 	genreRepo *genres.Repository
+	starRepo  *stars.Repository
 }
 
-func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository) *Repository {
+func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository, starRepo *stars.Repository) *Repository {
 	return &Repository{
 		db:        db,
 		genreRepo: genreRepo,
+		starRepo:  starRepo,
 	}
 }
 
-func (r *Repository) GetAllPaginated(ctx context.Context, offset int, limit int) ([]*Movie, int, error) {
+func (r *Repository) GetAllPaginated(ctx context.Context, starID *int, offset int, limit int) ([]*Movie, int, error) {
 	b := &pgx.Batch{}
-	b.Queue("SELECT id, title,  release_date, created_at FROM movies WHERE deleted_at IS NULL ORDER BY id LIMIT $1 OFFSET $2", limit, offset)
-	b.Queue("SELECT count(*) FROM movies WHERE deleted_at IS NULL")
+
+	selectQuery := dbx.StatementBuilder.
+		Select("id, title,  release_date, created_at").
+		From("movies").
+		Where("deleted_at IS NULL").
+		OrderBy("id").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	countQuery := dbx.StatementBuilder.
+		Select("count(*)").
+		From("movies").
+		Where("deleted_at IS NULL")
+
+	if starID != nil {
+		selectQuery = selectQuery.
+			Join("movie_stars on movies.id = movie_stars.movie_id").
+			Where("movie_stars.star_id = ?", starID)
+
+		countQuery = countQuery.
+			Join("movie_stars on movies.id = movie_stars.movie_id").
+			Where("movie_stars.star_id = ?", starID)
+	}
+	if err := dbx.QueueBatchSelect(b, selectQuery); err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+
+	if err := dbx.QueueBatchSelect(b, countQuery); err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+
 	br := r.db.SendBatch(ctx, b)
 	defer br.Close()
 
@@ -92,7 +125,20 @@ func (r *Repository) Create(ctx context.Context, movie *MovieDetails) error {
 				OrderNo: i,
 			}
 		})
-		return r.updateGenres(ctx, nil, nextGenres)
+		if err = r.updateGenres(ctx, nil, nextGenres); err != nil {
+			return err
+		}
+
+		nextCast := slices.MapIndex(movie.Cast, func(i int, c *stars.MovieCredit) *stars.MovieStarRelation {
+			return &stars.MovieStarRelation{
+				MovieID: movie.ID,
+				StarID:  c.Star.ID,
+				Role:    c.Role,
+				Details: c.Details,
+				OrderNo: i,
+			}
+		})
+		return r.updateCast(ctx, nil, nextCast)
 	})
 	if err != nil {
 		return apperrors.Internal(err)
@@ -129,7 +175,28 @@ func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
 				OrderNo: i,
 			}
 		})
-		return r.updateGenres(ctx, currentGenres, nextGenres)
+		if err = r.updateGenres(ctx, currentGenres, nextGenres); err != nil {
+			return err
+		}
+
+		currentCast, err := r.starRepo.GetRelationByMovieID(ctx, movie.ID)
+		if err != nil {
+			return err
+		}
+
+		nextCast := slices.MapIndex(movie.Cast, func(i int, c *stars.MovieCredit) *stars.MovieStarRelation {
+			return &stars.MovieStarRelation{
+				MovieID: movie.ID,
+				StarID:  c.Star.ID,
+				Role:    c.Role,
+				Details: c.Details,
+				OrderNo: i,
+			}
+		})
+		if err = r.updateCast(ctx, currentCast, nextCast); err != nil {
+			return err
+		}
+		return err
 	})
 	if err != nil {
 		return apperrors.EnsureInternal(err)
@@ -165,6 +232,27 @@ func (r *Repository) updateGenres(ctx context.Context, current, next []*genres.M
 			ctx,
 			"delete from movie_genres where movie_id = $1 and genre_id = $2",
 			mgo.MovieID, mgo.GenreID)
+		return err
+	}
+	return dbx.AdjustRelations(current, next, addFunc, removeFn)
+}
+
+func (r *Repository) updateCast(ctx context.Context, current, next []*stars.MovieStarRelation) error {
+	q := dbx.FromContext(ctx, r.db)
+
+	addFunc := func(mgo *stars.MovieStarRelation) error {
+		_, err := q.Exec(
+			ctx,
+			"insert into movie_stars (movie_id, star_id,role, details, order_no) values ($1, $2, $3, $4, $5)",
+			mgo.MovieID, mgo.StarID, mgo.Role, mgo.Details, mgo.OrderNo)
+		return err
+	}
+
+	removeFn := func(mgo *stars.MovieStarRelation) error {
+		_, err := q.Exec(
+			ctx,
+			"delete from movie_stars where movie_id = $1 and star_id = $2 and role = $3 ",
+			mgo.MovieID, mgo.StarID, mgo.Role)
 		return err
 	}
 	return dbx.AdjustRelations(current, next, addFunc, removeFn)

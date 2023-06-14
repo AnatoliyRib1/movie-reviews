@@ -3,6 +3,8 @@ package movies
 import (
 	"context"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/log"
@@ -11,17 +13,19 @@ import (
 type Service struct {
 	repo         *Repository
 	genreService *genres.Service
+	starService  *stars.Service
 }
 
-func NewService(repo *Repository, genreService *genres.Service) *Service {
+func NewService(repo *Repository, genreService *genres.Service, starService *stars.Service) *Service {
 	return &Service{
 		repo:         repo,
 		genreService: genreService,
+		starService:  starService,
 	}
 }
 
-func (s *Service) GetAllPaginated(ctx context.Context, offset int, limit int) ([]*Movie, int, error) {
-	return s.repo.GetAllPaginated(ctx, offset, limit)
+func (s *Service) GetAllPaginated(ctx context.Context, starID *int, offset int, limit int) ([]*Movie, int, error) {
+	return s.repo.GetAllPaginated(ctx, starID, offset, limit)
 }
 
 func (s *Service) Create(ctx context.Context, movie *MovieDetails) error {
@@ -59,6 +63,11 @@ func (s *Service) Delete(ctx context.Context, movieID int) error {
 
 func (s *Service) assemble(ctx context.Context, movie *MovieDetails) error {
 	var err error
-	movie.Genres, err = s.genreService.GetByMovieID(ctx, movie.ID)
-	return err
+	if movie.Genres, err = s.genreService.GetByMovieID(ctx, movie.ID); err != nil {
+		return err
+	}
+	if movie.Cast, err = s.starService.GetByMovieID(ctx, movie.ID); err != nil {
+		return err
+	}
+	return nil
 }

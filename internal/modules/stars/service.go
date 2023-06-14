@@ -14,8 +14,8 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) GetAllPaginated(ctx context.Context, offset int, limit int) ([]*Star, int, error) {
-	return s.repo.GetAllPaginated(ctx, offset, limit)
+func (s *Service) GetAllPaginated(ctx context.Context, movieID *int, offset int, limit int) ([]*Star, int, error) {
+	return s.repo.GetAllPaginated(ctx, movieID, offset, limit)
 }
 
 func (s *Service) GetByID(ctx context.Context, starID int) (star *StarDetails, err error) {
@@ -44,4 +44,8 @@ func (s *Service) Delete(ctx context.Context, starID int) error {
 	}
 	log.FromContext(ctx).Info("star deleted", "starId", starID)
 	return nil
+}
+
+func (s *Service) GetByMovieID(ctx context.Context, movieID int) ([]*MovieCredit, error) {
+	return s.repo.GetByMovieID(ctx, movieID)
 }

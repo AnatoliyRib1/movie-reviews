@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
 
 	"github.com/AnatoliyRib1/movie-reviews/contracts"
 	"github.com/AnatoliyRib1/movie-reviews/internal/config"
@@ -32,7 +33,7 @@ func (h *Handler) GetAll(c echo.Context) error {
 	pagination.SetDefaults(&req.PaginatedRequest, h.paginationConfig)
 	offset, limit := pagination.OffsetLimit(&req.PaginatedRequest)
 
-	movies, total, err := h.service.GetAllPaginated(c.Request().Context(), offset, limit)
+	movies, total, err := h.service.GetAllPaginated(c.Request().Context(), req.StarID, offset, limit)
 	if err != nil {
 		return err
 	}
@@ -44,7 +45,7 @@ func (h *Handler) Get(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	movie, err := h.service.GetByID(c.Request().Context(), req.ID)
+	movie, err := h.service.GetByID(c.Request().Context(), req.MovieID)
 	if err != nil {
 		return err
 	}
@@ -63,9 +64,22 @@ func (h *Handler) Create(c echo.Context) error {
 		},
 		Description: req.Description,
 	}
-	for _, genreID := range req.GenreIDs {
+	for _, genreID := range req.Genres {
 		movie.Genres = append(movie.Genres, &genres.Genre{ID: genreID})
 	}
+
+	for _, creditID := range req.Cast {
+		movie.Cast = append(
+			movie.Cast, &stars.MovieCredit{
+				Star: stars.Star{
+					ID: creditID.StarID,
+				},
+				Role:    creditID.Role,
+				Details: creditID.Details,
+			},
+		)
+	}
+
 	err = h.service.Create(c.Request().Context(), movie)
 	if err != nil {
 		return err
@@ -79,7 +93,7 @@ func (h *Handler) Delete(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if err = h.service.Delete(c.Request().Context(), req.ID); err != nil {
+	if err = h.service.Delete(c.Request().Context(), req.MovieID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusOK)
@@ -92,14 +106,26 @@ func (h *Handler) Update(c echo.Context) error {
 	}
 	movie := &MovieDetails{
 		Movie: Movie{
-			ID:          req.ID,
+			ID:          req.MovieID,
 			Title:       req.Title,
 			ReleaseDate: req.ReleaseDate,
 		},
 		Description: req.Description,
 	}
-	for _, genreID := range req.GenreIDs {
+
+	for _, genreID := range req.Genres {
 		movie.Genres = append(movie.Genres, &genres.Genre{ID: genreID})
+	}
+	for _, creditID := range req.Cast {
+		movie.Cast = append(
+			movie.Cast, &stars.MovieCredit{
+				Star: stars.Star{
+					ID: creditID.StarID,
+				},
+				Role:    creditID.Role,
+				Details: creditID.Details,
+			},
+		)
 	}
 
 	if err = h.service.Update(c.Request().Context(), movie); err != nil {

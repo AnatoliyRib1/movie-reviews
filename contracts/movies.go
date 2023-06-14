@@ -1,6 +1,9 @@
 package contracts
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type Movie struct {
 	ID          int        `json:"id"`
@@ -12,33 +15,59 @@ type Movie struct {
 
 type MovieDetails struct {
 	Movie
-	Description string   `json:"description"`
-	Version     int      `json:"version"`
-	Genres      []*Genre `json:"genres"`
+	Description string         `json:"description"`
+	Version     int            `json:"version"`
+	Genres      []*Genre       `json:"genres"`
+	Cast        []*MovieCredit `json:"cast"`
 }
+
+type MovieCredit struct {
+	Star    Star    `json:"star"`
+	Role    string  `json:"role"`
+	Details *string `json:"details,omitempty"`
+}
+
+type MovieCreditInfo struct {
+	StarID  int     `json:"star_id"`
+	Role    string  `json:"role"`
+	Details *string `json:"details"`
+}
+
 type GetMovieRequest struct {
-	ID int `param:"movieId" validate:"nonzero"`
+	MovieID int `param:"movieId" validate:"nonzero"`
 }
 
 type GetMoviesRequest struct {
 	PaginatedRequest
+	StarID     *int `query:"starId"`
+	SearchTerm *string
+}
+
+func (r *GetMoviesRequest) ToQueryParams() map[string]string {
+	param := r.PaginatedRequest.ToQueryParams()
+	if r.StarID != nil {
+		param["starId"] = strconv.Itoa(*r.StarID)
+	}
+	return param
 }
 
 type CreateMovieRequest struct {
-	Title       string    `json:"title" validate:"nonzero"`
-	Description string    `json:"description" validate:"nonzero"`
-	ReleaseDate time.Time `json:"release_date" validate:"nonzero"`
-	GenreIDs    []int     `json:"genre_ids"`
+	Title       string             `json:"title" validate:"nonzero"`
+	Description string             `json:"description" validate:"nonzero"`
+	ReleaseDate time.Time          `json:"release_date" validate:"nonzero"`
+	Genres      []int              `json:"genres"`
+	Cast        []*MovieCreditInfo `json:"cast"`
 }
 
 type UpdateMovieRequest struct {
-	ID          int       `json:"id"`
-	Version     int       `json:"version" validate:"min=0"`
-	Title       string    `json:"title" validate:"nonzero"`
-	Description string    `json:"description" validate:"nonzero"`
-	ReleaseDate time.Time `json:"release_date" validate:"nonzero"`
-	GenreIDs    []int     `json:"genre_ids"`
+	MovieID     int                `json:"-" param:"movieId" validate:"nonzero"`
+	Version     int                `json:"version" validate:"min=0"`
+	Title       string             `json:"title" `
+	Description string             `json:"description" `
+	ReleaseDate time.Time          `json:"release_date" `
+	Genres      []int              `json:"genres"`
+	Cast        []*MovieCreditInfo `json:"cast"`
 }
 type DeleteMovieRequest struct {
-	ID int `param:"movieId" validate:"nonzero"`
+	MovieID int `param:"movieId" validate:"nonzero"`
 }

@@ -17,7 +17,7 @@ func (c *Client) GetStars(req *contracts.GetStarsRequest) (*contracts.PaginatedR
 
 	_, err := c.client.R().
 		SetResult(&res).
-		SetQueryParams(req.PaginatedRequest.ToQueryParams()).
+		SetQueryParams(req.ToQueryParams()).
 		Get(c.path("/api/stars"))
 
 	return &res, err
@@ -39,7 +39,7 @@ func (c *Client) UpdateStar(req *contracts.AuthenticatedRequest[*contracts.Updat
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Put(c.path("/api/stars/%d", req.Request.ID))
+		Put(c.path("/api/stars/%d", req.Request.StarID))
 
 	return err
 }
@@ -49,7 +49,7 @@ func (c *Client) DeleteStar(req *contracts.AuthenticatedRequest[*contracts.Delet
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Delete(c.path("/api/stars/%d", req.Request.ID))
+		Delete(c.path("/api/stars/%d", req.Request.StarID))
 
 	return err
 }

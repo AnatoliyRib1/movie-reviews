@@ -112,6 +112,10 @@ func (h *Handler) Update(c echo.Context) error {
 		},
 		Description: req.Description,
 	}
+
+	for _, genreID := range req.Genres {
+		movie.Genres = append(movie.Genres, &genres.Genre{ID: genreID})
+	}
 	for _, creditID := range req.Cast {
 		movie.Cast = append(
 			movie.Cast, &stars.MovieCredit{

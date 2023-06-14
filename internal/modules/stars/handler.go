@@ -31,7 +31,7 @@ func (h *Handler) GetAll(c echo.Context) error {
 	pagination.SetDefaults(&req.PaginatedRequest, h.paginationConfig)
 	offset, limit := pagination.OffsetLimit(&req.PaginatedRequest)
 
-	stars, total, err := h.service.GetAllPaginated(c.Request().Context(), offset, limit)
+	stars, total, err := h.service.GetAllPaginated(c.Request().Context(), req.MovieID, offset, limit)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (h *Handler) Get(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	star, err := h.service.GetByID(c.Request().Context(), req.ID)
+	star, err := h.service.GetByID(c.Request().Context(), req.StarID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (h *Handler) Delete(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	if err = h.service.Delete(c.Request().Context(), req.ID); err != nil {
+	if err = h.service.Delete(c.Request().Context(), req.StarID); err != nil {
 		return err
 	}
 	return c.NoContent(http.StatusOK)
@@ -92,7 +92,7 @@ func (h *Handler) Update(c echo.Context) error {
 	}
 	star := &StarDetails{
 		Star: Star{
-			ID:        req.ID,
+			ID:        req.StarID,
 			FirstName: req.FirstName,
 			LastName:  req.LastName,
 			BirthDate: req.BirthDate,

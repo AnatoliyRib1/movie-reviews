@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
 	"github.com/AnatoliyRib1/movie-reviews/internal/slices"
 
@@ -16,12 +18,14 @@ import (
 type Repository struct {
 	db        *pgxpool.Pool
 	genreRepo *genres.Repository
+	starRepo  *stars.Repository
 }
 
-func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository) *Repository {
+func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository, starRepo *stars.Repository) *Repository {
 	return &Repository{
 		db:        db,
 		genreRepo: genreRepo,
+		starRepo:  starRepo,
 	}
 }
 
@@ -92,7 +96,20 @@ func (r *Repository) Create(ctx context.Context, movie *MovieDetails) error {
 				OrderNo: i,
 			}
 		})
-		return r.updateGenres(ctx, nil, nextGenres)
+		if err = r.updateGenres(ctx, nil, nextGenres); err != nil {
+			return err
+		}
+
+		nextCast := slices.MapIndex(movie.Cast, func(i int, c *stars.MovieCredit) *stars.MovieStarRelation {
+			return &stars.MovieStarRelation{
+				MovieID: movie.ID,
+				StarID:  c.Star.ID,
+				Role:    c.Role,
+				Details: c.Details,
+				OrderNo: i,
+			}
+		})
+		return r.updateCast(ctx, nil, nextCast)
 	})
 	if err != nil {
 		return apperrors.Internal(err)
@@ -129,7 +146,23 @@ func (r *Repository) Update(ctx context.Context, movie *MovieDetails) error {
 				OrderNo: i,
 			}
 		})
-		return r.updateGenres(ctx, currentGenres, nextGenres)
+		if err = r.updateGenres(ctx, currentGenres, nextGenres); err != nil {
+			return err
+		}
+
+		nextCast := slices.MapIndex(movie.Cast, func(i int, c *stars.MovieCredit) *stars.MovieStarRelation {
+			return &stars.MovieStarRelation{
+				MovieID: movie.ID,
+				StarID:  c.Star.ID,
+				Role:    c.Role,
+				Details: c.Details,
+				OrderNo: i,
+			}
+		})
+		if err = r.updateCast(ctx, nil, nextCast); err != nil {
+			return err
+		}
+		return err
 	})
 	if err != nil {
 		return apperrors.EnsureInternal(err)
@@ -165,6 +198,27 @@ func (r *Repository) updateGenres(ctx context.Context, current, next []*genres.M
 			ctx,
 			"delete from movie_genres where movie_id = $1 and genre_id = $2",
 			mgo.MovieID, mgo.GenreID)
+		return err
+	}
+	return dbx.AdjustRelations(current, next, addFunc, removeFn)
+}
+
+func (r *Repository) updateCast(ctx context.Context, current, next []*stars.MovieStarRelation) error {
+	q := dbx.FromContext(ctx, r.db)
+
+	addFunc := func(mgo *stars.MovieStarRelation) error {
+		_, err := q.Exec(
+			ctx,
+			"insert into movie_stars (movie_id, star_id,role, details, order_no) values ($1, $2, $3, $4, $5)",
+			mgo.MovieID, mgo.StarID, mgo.Role, mgo.Details, mgo.OrderNo)
+		return err
+	}
+
+	removeFn := func(mgo *stars.MovieStarRelation) error {
+		_, err := q.Exec(
+			ctx,
+			"delete from movie_stars where movie_id = $1 and star_id = $2 and role = $3 and details = $4",
+			mgo.MovieID, mgo.StarID, mgo.Role, mgo.Details)
 		return err
 	}
 	return dbx.AdjustRelations(current, next, addFunc, removeFn)

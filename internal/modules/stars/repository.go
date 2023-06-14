@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/Masterminds/squirrel"
+
 	"github.com/jackc/pgx/v5"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
@@ -19,10 +21,44 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) GetAllPaginated(ctx context.Context, offset int, limit int) ([]*Star, int, error) {
+func (r *Repository) GetAllPaginated(ctx context.Context, movieID *int, offset int, limit int) ([]*Star, int, error) {
 	b := &pgx.Batch{}
-	b.Queue("SELECT id, first_name , last_name, birth_date,  death_date,created_at, deleted_at FROM stars WHERE deleted_at IS NULL ORDER BY id LIMIT $1 OFFSET $2", limit, offset)
-	b.Queue("SELECT count(*) FROM stars WHERE deleted_at IS NULL")
+
+	selectQuery := squirrel.
+		Select("id, first_name, last_name, birth_date, death_date, created_at, deleted_at").
+		From("stars").
+		Where("deleted_at IS NULL").
+		OrderBy("id").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	countQuery := squirrel.
+		Select("count(*)").
+		From("stars").
+		Where("deleted_at IS NULL")
+
+	if movieID != nil {
+		selectQuery = selectQuery.
+			Join("movie_stars on stars.id = movie_stars.star_id").
+			Where("movie_stars.movie_id = $1", movieID)
+
+		countQuery = countQuery.
+			Join("movie_stars on stars.id = movie_stars.star_id").
+			Where("movie_stars.movie_id = $1", movieID)
+	}
+
+	sql, args, err := selectQuery.ToSql()
+	if err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+	b.Queue(sql, args...)
+
+	sql, args, err = countQuery.ToSql()
+	if err != nil {
+		return nil, 0, apperrors.Internal(err)
+	}
+	b.Queue(sql, args...)
+
 	br := r.db.SendBatch(ctx, b)
 	defer br.Close()
 
@@ -100,6 +136,37 @@ func (r *Repository) Delete(ctx context.Context, starID int) error {
 		return errStarWithIDNotFound(starID)
 	}
 	return nil
+}
+
+func (r *Repository) GetByMovieID(ctx context.Context, movieID int) ([]*MovieCredit, error) {
+	rows, err := r.db.Query(ctx, `
+		select s.id, s.first_name , s.last_name, s.birth_date, s.death_date, s.created_at , ms.role, ms.details from stars s
+		inner join movie_stars ms on ms.star_id = s.id
+		where ms.movie_id = $1
+		order by ms.order_no
+		`, movieID)
+	if err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	defer rows.Close()
+	return scanStars(rows)
+}
+
+func scanStars(rows pgx.Rows) ([]*MovieCredit, error) {
+	var stars []*MovieCredit
+	for rows.Next() {
+		var star MovieCredit
+		if err := rows.Scan(
+			&star.Star.ID, &star.Star.FirstName, &star.Star.LastName, &star.Star.BirthDate,
+			&star.Star.DeathDate, &star.Star.CreatedAt, &star.Role, &star.Details); err != nil {
+			return nil, apperrors.Internal(err)
+		}
+		stars = append(stars, &star)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, apperrors.Internal(err)
+	}
+	return stars, nil
 }
 
 func errStarWithIDNotFound(starID int) error {

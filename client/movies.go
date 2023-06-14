@@ -39,7 +39,7 @@ func (c *Client) UpdateMovie(req *contracts.AuthenticatedRequest[*contracts.Upda
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Put(c.path("/api/movies/%d", req.Request.ID))
+		Put(c.path("/api/movies/%d", req.Request.MovieID))
 
 	return err
 }
@@ -49,7 +49,7 @@ func (c *Client) DeleteMovie(req *contracts.AuthenticatedRequest[*contracts.Dele
 		SetAuthToken(req.AccessToken).
 		SetHeader("Content-Type", "application/json").
 		SetBody(req.Request).
-		Delete(c.path("/api/movies/%d", req.Request.ID))
+		Delete(c.path("/api/movies/%d", req.Request.MovieID))
 
 	return err
 }

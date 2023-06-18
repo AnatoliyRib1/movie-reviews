@@ -7,6 +7,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/reviews"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/movies"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
@@ -61,6 +63,7 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	genresModule := genres.NewModule(db)
 	starsModule := stars.NewModule(db, cfg.Pagination)
 	moviesModule := movies.NewModule(db, genresModule, starsModule, cfg.Pagination)
+	reviewsModule := reviews.NewModule(db, cfg.Pagination)
 
 	if err = createInitialAdminUser(cfg.Admin, authModule.Service); err != nil {
 		return nil, withClosers(closers, fmt.Errorf("create initial admin user: %w", err))
@@ -108,6 +111,13 @@ func New(ctx context.Context, cfg *config.Config) (*Server, error) {
 	api.POST("/movies", moviesModule.Handler.Create, auth.Editor)
 	api.PUT("/movies/:movieId", moviesModule.Handler.Update, auth.Editor)
 	api.DELETE("/movies/:movieId", moviesModule.Handler.Delete, auth.Editor)
+
+	// Reviews API routes
+	api.GET("/reviews", reviewsModule.Handler.GetAll)
+	api.GET("/reviews/:reviewId", reviewsModule.Handler.Get)
+	api.POST("/users/:userId/reviews", reviewsModule.Handler.Create, auth.Self)
+	api.PUT("/users/:userId/reviews/:reviewId", reviewsModule.Handler.Update, auth.Self)
+	api.DELETE("/users/:userId/reviews/:reviewId", reviewsModule.Handler.Delete, auth.Self)
 
 	return &Server{e: e, cfg: cfg, closers: closers}, nil
 }

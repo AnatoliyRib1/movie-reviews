@@ -25,7 +25,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]*Genre, error) {
 	}
 
 	defer rows.Close()
-	return scanGenres(rows)
+	return pgx.CollectRows[*Genre](rows, pgx.RowToAddrOfStructByPos[Genre])
 }
 
 func (r *Repository) GetByID(ctx context.Context, id int) (*Genre, error) {
@@ -56,7 +56,7 @@ func (r *Repository) GetByMovieID(ctx context.Context, movieID int) ([]*Genre, e
 		return nil, apperrors.Internal(err)
 	}
 	defer rows.Close()
-	return scanGenres(rows)
+	return pgx.CollectRows[*Genre](rows, pgx.RowToAddrOfStructByPos[Genre])
 }
 
 func (r *Repository) GetRelationByMovieID(ctx context.Context, movieID int) ([]*MovieGenreRelation, error) {
@@ -77,21 +77,6 @@ func (r *Repository) GetRelationByMovieID(ctx context.Context, movieID int) ([]*
 		relations = append(relations, &relation)
 	}
 	return relations, nil
-}
-
-func scanGenres(rows pgx.Rows) ([]*Genre, error) {
-	var genres []*Genre
-	for rows.Next() {
-		var genre Genre
-		if err := rows.Scan(&genre.ID, &genre.Name); err != nil {
-			return nil, apperrors.Internal(err)
-		}
-		genres = append(genres, &genre)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, apperrors.Internal(err)
-	}
-	return genres, nil
 }
 
 func (r *Repository) Create(ctx context.Context, genre *Genre) error {

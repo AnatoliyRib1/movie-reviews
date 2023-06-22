@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AnatoliyRib1/movie-reviews/internal/modules/movies"
+	"github.com/jackc/pgx/v5/pgconn"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/apperrors"
 	"github.com/AnatoliyRib1/movie-reviews/internal/dbx"
 	"github.com/jackc/pgx/v5"
@@ -11,27 +14,40 @@ import (
 )
 
 type Repository struct {
-	db *pgxpool.Pool
+	db         *pgxpool.Pool
+	moviesRepo *movies.Repository
 }
 
-func NewRepository(db *pgxpool.Pool) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *pgxpool.Pool, moviesRepo *movies.Repository) *Repository {
+	return &Repository{
+		db:         db,
+		moviesRepo: moviesRepo,
+	}
 }
 
 func (r *Repository) Create(ctx context.Context, review *Review) error {
-	err := r.db.QueryRow(
-		ctx,
-		"insert into reviews (movie_id, user_id, title, content, rating) values ($1, $2, $3, $4, $5) returning id, created_at",
-		review.MovieID, review.UserID, review.Title, review.Content, review.Rating).
-		Scan(&review.ID, &review.CreatedAt)
+	err := dbx.InTransaction(ctx, r.db, func(ctx context.Context, tx pgx.Tx) error {
+		if err := r.moviesRepo.Lock(ctx, tx, review.MovieID); err != nil {
+			return err
+		}
+		err := tx.QueryRow(
+			ctx,
+			"insert into reviews (movie_id, user_id, title, content, rating) values ($1, $2, $3, $4, $5) returning id, created_at",
+			review.MovieID, review.UserID, review.Title, review.Content, review.Rating).
+			Scan(&review.ID, &review.CreatedAt)
 
-	switch {
-	case dbx.IsUniqueViolation(err, ""):
-		return apperrors.AlreadyExists("review", "(movie_id,user_id)", fmt.Sprintf("(%d,%d)", review.MovieID, review.UserID))
-	case err != nil:
-		return apperrors.Internal(err)
+		switch {
+		case dbx.IsUniqueViolation(err, ""):
+			return apperrors.AlreadyExists("review", "(movie_id,user_id)", fmt.Sprintf("(%d,%d)", review.MovieID, review.UserID))
+		case err != nil:
+			return apperrors.Internal(err)
+		}
+
+		return r.recalculateMovieRating(ctx, review.MovieID)
+	})
+	if err != nil {
+		return apperrors.EnsureInternal(err)
 	}
-
 	return nil
 }
 
@@ -56,7 +72,7 @@ func (r *Repository) GetByID(ctx context.Context, reviewID int) (*Review, error)
 
 func (r *Repository) GetPaginated(ctx context.Context, movieID, userID *int, offset int, limit int) ([]*Review, int, error) {
 	selectQuery := dbx.StatementBuilder.
-		Select("id", "movie_id", "user_id", "title", "content", "rating", "created_at").
+		Select("id", "movie_id", "user_id", "rating", "title", "content", "created_at", "deleted_at").
 		From("reviews").
 		Where("deleted_at is null").
 		Limit(uint64(limit)).
@@ -97,7 +113,7 @@ func (r *Repository) GetPaginated(ctx context.Context, movieID, userID *int, off
 	var reviews []*Review
 	for rows.Next() {
 		var review Review
-		if err = rows.Scan(&review.ID, &review.MovieID, &review.UserID, &review.Title, &review.Content, &review.Rating, &review.CreatedAt); err != nil {
+		if err = rows.Scan(&review.ID, &review.MovieID, &review.UserID, &review.Rating, &review.Title, &review.Content, &review.CreatedAt, &review.DeletedAt); err != nil {
 			return nil, 0, apperrors.Internal(err)
 		}
 		reviews = append(reviews, &review)
@@ -116,32 +132,62 @@ func (r *Repository) GetPaginated(ctx context.Context, movieID, userID *int, off
 }
 
 func (r *Repository) Update(ctx context.Context, reviewID, userID int, title, content string, rating int) error {
-	n, err := r.db.Exec(
-		ctx,
-		"update reviews set title = $1, content = $2, rating = $3 where deleted_at is null and id = $4 and user_id = $5",
-		title, content, rating, reviewID, userID)
+	review, err := r.GetByID(ctx, reviewID)
 	if err != nil {
-		return apperrors.Internal(err)
+		return err
 	}
 
-	if n.RowsAffected() == 0 {
-		return r.specifyModificationError(ctx, reviewID, userID)
+	err = dbx.InTransaction(ctx, r.db, func(ctx context.Context, tx pgx.Tx) error {
+		if err = r.moviesRepo.Lock(ctx, tx, review.MovieID); err != nil {
+			return err
+		}
+		var n pgconn.CommandTag
+		n, err = r.db.Exec(
+			ctx,
+			"update reviews set title = $1, content = $2, rating = $3 where deleted_at is null and id = $4 and user_id = $5",
+			title, content, rating, reviewID, userID)
+		if err != nil {
+			return apperrors.Internal(err)
+		}
+
+		if n.RowsAffected() == 0 {
+			return r.specifyModificationError(ctx, reviewID, userID)
+		}
+
+		return r.recalculateMovieRating(ctx, review.MovieID)
+	})
+	if err != nil {
+		return apperrors.Internal(err)
 	}
 
 	return nil
 }
 
 func (r *Repository) Delete(ctx context.Context, reviewID, userID int) error {
-	n, err := r.db.Exec(
-		ctx,
-		"update reviews set deleted_at = now() where deleted_at is null and id = $1 and user_id = $2",
-		reviewID, userID)
+	review, err := r.GetByID(ctx, reviewID)
 	if err != nil {
-		return apperrors.Internal(err)
+		return err
 	}
 
-	if n.RowsAffected() == 0 {
-		return r.specifyModificationError(ctx, reviewID, userID)
+	err = dbx.InTransaction(ctx, r.db, func(ctx context.Context, tx pgx.Tx) error {
+		if err = r.moviesRepo.Lock(ctx, tx, review.MovieID); err != nil {
+			return err
+		}
+		var n pgconn.CommandTag
+		n, err = r.db.Exec(
+			ctx,
+			"update reviews set deleted_at = now() where deleted_at is null and id = $1 and user_id = $2",
+			reviewID, userID)
+		if err != nil {
+			return apperrors.Internal(err)
+		}
+		if n.RowsAffected() == 0 {
+			return r.specifyModificationError(ctx, reviewID, userID)
+		}
+		return r.recalculateMovieRating(ctx, review.MovieID)
+	})
+	if err != nil {
+		return apperrors.EnsureInternal(err)
 	}
 
 	return nil
@@ -162,4 +208,18 @@ func (r *Repository) specifyModificationError(ctx context.Context, reviewID, use
 
 	// If we got here, then something is wrong
 	return apperrors.Internal(fmt.Errorf("unexpected error creating/updating review with id %d", reviewID))
+}
+
+func (r *Repository) recalculateMovieRating(ctx context.Context, movieID int) error {
+	q := dbx.FromContext(ctx, r.db)
+
+	n, err := q.Exec(ctx, "update movies set avg_rating = (select avg(rating) from reviews where deleted_at IS NULL  AND movie_id = $1) where id = $1", movieID)
+	if err != nil {
+		return apperrors.Internal(err)
+	}
+
+	if n.RowsAffected() == 0 {
+		return apperrors.NotFound("movie", "id", movieID)
+	}
+	return nil
 }

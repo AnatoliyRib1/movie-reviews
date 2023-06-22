@@ -3,6 +3,8 @@ package movies
 import (
 	"net/http"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
 
@@ -16,6 +18,8 @@ import (
 type Handler struct {
 	service          *Service
 	paginationConfig config.PaginationConfig
+
+	reqGroup singleflight.Group
 }
 
 func NewHandler(service *Service, paginationConfig config.PaginationConfig) *Handler {
@@ -26,30 +30,38 @@ func NewHandler(service *Service, paginationConfig config.PaginationConfig) *Han
 }
 
 func (h *Handler) GetAll(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.GetMoviesRequest](c)
-	if err != nil {
-		return err
-	}
-	pagination.SetDefaults(&req.PaginatedRequest, h.paginationConfig)
-	offset, limit := pagination.OffsetLimit(&req.PaginatedRequest)
+	res, err, _ := h.reqGroup.Do(c.Request().RequestURI, func() (any, error) {
+		req, err := echox.BindAndValidate[contracts.GetMoviesRequest](c)
+		if err != nil {
+			return nil, err
+		}
+		pagination.SetDefaults(&req.PaginatedRequest, h.paginationConfig)
+		offset, limit := pagination.OffsetLimit(&req.PaginatedRequest)
 
-	movies, total, err := h.service.GetAllPaginated(c.Request().Context(), req.SearchTerm, req.StarID, offset, limit)
+		movies, total, err := h.service.GetAllPaginated(c.Request().Context(), req.SearchTerm, req.StarID, req.SortByRating, offset, limit)
+		if err != nil {
+			return nil, err
+		}
+		return pagination.Response(&req.PaginatedRequest, total, movies), nil
+	})
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, pagination.Response(&req.PaginatedRequest, total, movies))
+	return c.JSON(http.StatusOK, res)
 }
 
 func (h *Handler) Get(c echo.Context) error {
-	req, err := echox.BindAndValidate[contracts.GetMovieRequest](c)
+	res, err, _ := h.reqGroup.Do(c.Request().RequestURI, func() (any, error) {
+		req, err := echox.BindAndValidate[contracts.GetMovieRequest](c)
+		if err != nil {
+			return err, nil
+		}
+		return h.service.GetByID(c.Request().Context(), req.MovieID)
+	})
 	if err != nil {
 		return err
 	}
-	movie, err := h.service.GetByID(c.Request().Context(), req.MovieID)
-	if err != nil {
-		return err
-	}
-	return c.JSON(http.StatusOK, movie)
+	return c.JSON(http.StatusOK, res)
 }
 
 func (h *Handler) Create(c echo.Context) error {

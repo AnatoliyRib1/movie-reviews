@@ -29,11 +29,11 @@ func NewRepository(db *pgxpool.Pool, genreRepo *genres.Repository, starRepo *sta
 	}
 }
 
-func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, starID *int, offset int, limit int) ([]*Movie, int, error) {
+func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, starID *int, sortByRating *string, offset int, limit int) ([]*Movie, int, error) {
 	b := &pgx.Batch{}
 
 	selectQuery := dbx.StatementBuilder.
-		Select("id, title,  release_date, created_at").
+		Select("id, title,  release_date, avg_rating,created_at, deleted_at").
 		From("movies").
 		Where("deleted_at IS NULL").
 		Limit(uint64(limit)).
@@ -43,7 +43,9 @@ func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, st
 		Select("count(*)").
 		From("movies").
 		Where("deleted_at IS NULL")
-
+	if sortByRating != nil {
+		selectQuery = selectQuery.OrderByClause("avg_rating" + *sortByRating)
+	}
 	if starID != nil {
 		selectQuery = selectQuery.
 			Join("movie_stars on movies.id = movie_stars.movie_id").
@@ -83,7 +85,7 @@ func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, st
 	var movies []*Movie
 	for rows.Next() {
 		var movie Movie
-		if err = rows.Scan(&movie.ID, &movie.Title, &movie.ReleaseDate, &movie.CreatedAt); err != nil {
+		if err = rows.Scan(&movie.ID, &movie.Title, &movie.ReleaseDate, &movie.AvgRating, &movie.CreatedAt, &movie.DeletedAt); err != nil {
 			return nil, 0, apperrors.Internal(err)
 		}
 		movies = append(movies, &movie)
@@ -101,10 +103,10 @@ func (r *Repository) GetAllPaginated(ctx context.Context, searchTerm *string, st
 
 func (r *Repository) GetByID(ctx context.Context, id int) (*MovieDetails, error) {
 	var movie MovieDetails
-	query := "SELECT id, version ,title, description, release_date, created_at FROM movies WHERE id = $1 AND deleted_at IS NULL "
+	query := "SELECT id, version ,title, description, release_date,avg_rating, created_at, deleted_at FROM movies WHERE id = $1 AND deleted_at IS NULL "
 	row := r.db.QueryRow(ctx, query, id)
 
-	err := row.Scan(&movie.ID, &movie.Version, &movie.Title, &movie.Description, &movie.ReleaseDate, &movie.CreatedAt)
+	err := row.Scan(&movie.ID, &movie.Version, &movie.Title, &movie.Description, &movie.ReleaseDate, &movie.AvgRating, &movie.CreatedAt, &movie.DeletedAt)
 	switch {
 	case dbx.IsNoRows(err):
 		return nil, errMovieWithIDNotFound(id)
@@ -221,6 +223,17 @@ func (r *Repository) Delete(ctx context.Context, movieID int) error {
 	}
 	if n.RowsAffected() == 0 {
 		return errMovieWithIDNotFound(movieID)
+	}
+	return nil
+}
+
+func (r *Repository) Lock(ctx context.Context, tx pgx.Tx, movieID int) error {
+	n, err := tx.Exec(ctx, "select 1 from movies where deleted_at is null and id = $1 for update ", movieID)
+	if err != nil {
+		return apperrors.Internal(err)
+	}
+	if n.RowsAffected() == 0 {
+		return apperrors.NotFound("movie", "id", movieID)
 	}
 	return nil
 }

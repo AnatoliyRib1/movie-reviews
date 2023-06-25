@@ -18,6 +18,7 @@ func SetupValidators() {
 		{"password", password},
 		{"email", email},
 		{"role", role},
+		{"sort", sort},
 	}
 
 	for _, v := range validators {
@@ -82,4 +83,27 @@ func role(v interface{}, _ string) error {
 	}
 
 	return nil
+}
+
+func sort(v interface{}, _ string) error {
+	validate := func(s *string) error {
+		if s == nil {
+			return nil
+		}
+		switch *s {
+		case "asc", "desc":
+			return nil
+		}
+		return fmt.Errorf("sort must be one of asc or desc")
+	}
+
+	switch s := v.(type) {
+	case string:
+		return validate(&s)
+	case *string:
+		return validate(s)
+	default:
+		return fmt.Errorf("sort only validates strings or pointers to strings")
+
+	}
 }

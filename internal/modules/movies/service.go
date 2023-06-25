@@ -3,6 +3,8 @@ package movies
 import (
 	"context"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/stars"
 
 	"github.com/AnatoliyRib1/movie-reviews/internal/modules/genres"
@@ -24,8 +26,8 @@ func NewService(repo *Repository, genreService *genres.Service, starService *sta
 	}
 }
 
-func (s *Service) GetAllPaginated(ctx context.Context, searchTerm *string, starID *int, offset int, limit int) ([]*Movie, int, error) {
-	return s.repo.GetAllPaginated(ctx, searchTerm, starID, offset, limit)
+func (s *Service) GetAllPaginated(ctx context.Context, searchTerm *string, starID *int, sortByRating *string, offset int, limit int) ([]*Movie, int, error) {
+	return s.repo.GetAllPaginated(ctx, searchTerm, starID, sortByRating, offset, limit)
 }
 
 func (s *Service) Create(ctx context.Context, movie *MovieDetails) error {
@@ -62,12 +64,18 @@ func (s *Service) Delete(ctx context.Context, movieID int) error {
 }
 
 func (s *Service) assemble(ctx context.Context, movie *MovieDetails) error {
-	var err error
-	if movie.Genres, err = s.genreService.GetByMovieID(ctx, movie.ID); err != nil {
+	group, groupCtx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		var err error
+		movie.Genres, err = s.genreService.GetByMovieID(groupCtx, movie.ID)
 		return err
-	}
-	if movie.Cast, err = s.starService.GetByMovieID(ctx, movie.ID); err != nil {
+	})
+	group.Go(func() error {
+		var err error
+		movie.Cast, err = s.starService.GetByMovieID(groupCtx, movie.ID)
 		return err
-	}
-	return nil
+	})
+
+	return group.Wait()
 }

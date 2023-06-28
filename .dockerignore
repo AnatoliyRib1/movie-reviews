@@ -9,3 +9,6 @@ tern
 .git
 client
 integration_tests
+scrapper/.cache
+.cache/
+scrapper/scrapper/output

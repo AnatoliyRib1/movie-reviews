@@ -4,3 +4,8 @@ before-push:
 	go build ./...&&\
 	golangci-lint run ./... &&\
 	go test -v ./integration_tests/...
+
+scrap:
+	go run . scrap -o ./scrapper/output
+ingest:
+	go run . ingest -i ./scrapper/output --email admin@mail.com --password "&dm1Npa$$"

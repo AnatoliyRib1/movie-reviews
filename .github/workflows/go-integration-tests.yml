@@ -3,10 +3,10 @@ name: Go Integration Tests
 on:
   pull_request:
     branches:
-      - AnatoliyRib1/main
+      - main
   push:
     branches:
-      - AnatoliyRib1/main
+      - main
 
 jobs:
   build-and-test:

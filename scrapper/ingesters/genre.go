@@ -74,7 +74,7 @@ func (i *GenreIngester) Ingest(genres []string) error {
 	}
 
 	i.conversionMap = make(map[string]int, len(nameToGenreMap))
-	for _, genre := range existingGenres {
+	for _, genre := range nameToGenreMap {
 		i.conversionMap[genre.Name] = genre.ID
 	}
 

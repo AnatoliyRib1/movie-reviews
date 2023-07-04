@@ -22,5 +22,4 @@ type AuthenticatedRequest[T any] struct {
 
 func NewAuthenticated[T any](req T, accessToken string) *AuthenticatedRequest[T] {
 	return &AuthenticatedRequest[T]{Request: req, AccessToken: accessToken}
-
 }

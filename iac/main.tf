@@ -199,6 +199,7 @@ resource "aws_instance" "host_instance" {
 
   user_data = <<-EOF
               #!/bin/bash
+
               sudo apt-get update
               sudo apt-get install -y docker.io awscli jq
               sudo systemctl start docker
@@ -217,7 +218,7 @@ resource "aws_instance" "host_instance" {
                 -e ADMIN_PASSWORD=$ADMIN_PASSWORD \
                 -e DB_URL=$DB_URL \
                 -p 80:8000 \
-                alexeykovp/movie-reviews:latest
+                anatoliyrib/movie-reviews:latest
               sudo docker run -d \
                 --name watchtower \
                 -v /var/run/docker.sock:/var/run/docker.sock \
